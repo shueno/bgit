@@ -149,7 +149,7 @@ public class LogDialog extends AbstractDialog {
         for (GitCommit gitCommit : gitCommits) {
             commitTableModel.addRow(new Object[] { gitCommit,
                     gitCommit.getShortMessage(), gitCommit.getAuthor(),
-                    gitCommit.getDateCommitted() });
+                    gitCommit.getDateAuthored() });
         }
     }
 
@@ -161,7 +161,7 @@ public class LogDialog extends AbstractDialog {
             return;
         }
 
-        commitTextField.setText(gitCommit.getFullIdString());
+        commitTextField.setText(gitCommit.getOneline());
     }
 
     private void handleViewActionPerformed() {

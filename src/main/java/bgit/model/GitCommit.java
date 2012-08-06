@@ -1,7 +1,7 @@
 package bgit.model;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import org.eclipse.jgit.api.DiffCommand;
@@ -65,9 +65,18 @@ public class GitCommit {
         return gitDiffEntries;
     }
 
-    @Override
-    public String toString() {
-        return String.format("%s - %s", getShortIdString(), getShortMessage());
+    public String getOneline() {
+        return String.format("%s '%s' by %s on %tF", getShortIdString(),
+                getShortMessage(), getAuthorName(), getDateAuthored());
+    }
+
+    public String getShortIdString() {
+        // TODO Review whether 8 chars is enough
+        return revCommit.getName().substring(0, 8);
+    }
+
+    public String getFullIdString() {
+        return revCommit.getName();
     }
 
     public String getAuthor() {
@@ -83,8 +92,8 @@ public class GitCommit {
         return revCommit.getAuthorIdent().getEmailAddress();
     }
 
-    public Date getDateCommitted() {
-        return revCommit.getAuthorIdent().getWhen();
+    public Timestamp getDateAuthored() {
+        return new Timestamp(revCommit.getAuthorIdent().getWhen().getTime());
     }
 
     public final String getShortMessage() {
@@ -93,15 +102,6 @@ public class GitCommit {
 
     public final String getFullMessage() {
         return revCommit.getFullMessage();
-    }
-
-    public String getShortIdString() {
-        // TODO Review whether 8 chars is enough
-        return revCommit.getName().substring(0, 8);
-    }
-
-    public String getFullIdString() {
-        return revCommit.getName();
     }
 
     ObjectId getTreeId() {

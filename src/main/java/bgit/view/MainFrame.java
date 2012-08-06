@@ -3,6 +3,7 @@ package bgit.view;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
+import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.HashMap;
 import java.util.Map;
@@ -30,21 +31,23 @@ public class MainFrame extends JFrame {
 
     private final JMenuBar menuBar;
 
-    private final Action exitAction;
-
-    private final Action newProjectAction;
-
-    private final Action cloneProjectAction;
-
-    private final Action deleteProjectAction;
-
-    private final Action renameProjectAction;
-
     private final JTabbedPane tabbedPane;
 
-    private final Map<String, Action> menuActionMap = new HashMap<String, Action>();
+    private final Action exitAction = new ExitAction();
+
+    private final Action newProjectAction = new NewProjectAction();
+
+    private final Action cloneProjectAction = new CloneProject();
+
+    private final Action renameProjectAction = new RenameProjectAction();
+
+    private final Action deleteProjectAction = new DeleteProjectAction();
+
     private final Action configApplicationAction = new ConfigApplicationAction();
+
     private final Action userSettingsAction = new UserSettingsAction();
+
+    private final Map<String, Action> menuActionMap = new HashMap<String, Action>();
 
     public MainFrame(Application application) {
         this.application = application;
@@ -53,62 +56,34 @@ public class MainFrame extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(new Dimension(1000, 500));
         setLocationRelativeTo(null);
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowOpened(WindowEvent e) {
+                handleWindowOpened();
+            }
+        });
 
         menuBar = new JMenuBar();
         setJMenuBar(menuBar);
 
         JMenu fileMenu = new JMenu("File");
         menuBar.add(fileMenu);
-
-        exitAction = new AbstractAction("Exit") {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                handleExitActionPerformed();
-            }
-        };
         fileMenu.add(exitAction);
 
         JMenu projectMenu = new JMenu("Project");
         menuBar.add(projectMenu);
-
-        newProjectAction = new AbstractAction("New project") {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                handleNewProjectActionPerformed();
-            }
-        };
         projectMenu.add(newProjectAction);
-        cloneProjectAction = new AbstractAction("Clone from") {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                handleCloneProjectActionPerformed();
-            }
-        };
         projectMenu.add(cloneProjectAction);
-        renameProjectAction = new AbstractAction("Rename") {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                handleRenameProjectActionPerformed();
-            }
-        };
         projectMenu.add(renameProjectAction).setVisible(false);
-        deleteProjectAction = new AbstractAction("Delete") {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                handleDeleteProjectActionPerformed();
-            }
-        };
         projectMenu.add(deleteProjectAction).setVisible(false);
 
         JMenu applicationMenuItem = new JMenu("Application");
         menuBar.add(applicationMenuItem);
-
         applicationMenuItem.add(userSettingsAction);
         applicationMenuItem.add(configApplicationAction);
 
         tabbedPane = new JTabbedPane(JTabbedPane.TOP);
         tabbedPane.addChangeListener(new ChangeListener() {
-
             @Override
             public void stateChanged(ChangeEvent e) {
                 handleTabbedPaneStateChanged();
@@ -117,8 +92,7 @@ public class MainFrame extends JFrame {
         getContentPane().add(tabbedPane, BorderLayout.CENTER);
     }
 
-    // TODO Process on WindowOpened event handler.
-    public void showFrame() {
+    private void handleWindowOpened() {
 
         for (int i = 0; i < menuBar.getMenuCount(); i++) {
             JMenu menu = menuBar.getMenu(i);
@@ -139,75 +113,10 @@ public class MainFrame extends JFrame {
             ProjectPanel projectPanel = new ProjectPanel(project);
             insertProjectPanel(projectPanel);
         }
-
-        setVisible(true);
     }
 
     private String convertToKey(JMenu menu, JMenuItem menuItem) {
         return String.format("%s/%s", menu.getText(), menuItem.getText());
-    }
-
-    // TODO Review to distinguish NewProject and OpenProject
-    private void handleNewProjectActionPerformed() {
-        ProjectDialog projectDialog = new ProjectDialog(application);
-        projectDialog.setVisible(true);
-        Project project = projectDialog.getProject();
-
-        if (project == null) {
-            return;
-        }
-
-        ProjectPanel projectPanel = new ProjectPanel(project);
-        insertProjectPanel(projectPanel);
-        tabbedPane.setSelectedComponent(projectPanel);
-    }
-
-    private void handleCloneProjectActionPerformed() {
-        CloneDialog cloneDialog = new CloneDialog(application);
-        cloneDialog.setVisible(true);
-        Project project = cloneDialog.getProject();
-
-        if (project == null) {
-            return;
-        }
-
-        ProjectPanel projectPanel = new ProjectPanel(project);
-        insertProjectPanel(projectPanel);
-        tabbedPane.setSelectedComponent(projectPanel);
-    }
-
-    private void handleRenameProjectActionPerformed() {
-        ProjectPanel projectPanel = (ProjectPanel) tabbedPane
-                .getSelectedComponent();
-
-        if (projectPanel == null) {
-            return;
-        }
-
-        Project project = projectPanel.getProject();
-        String name = null;
-
-        while (true) {
-            name = JOptionPane.showInputDialog("New project name",
-                    project.getName());
-
-            if (name == null) {
-                return;
-            }
-
-            name = name.trim();
-
-            if (!name.isEmpty()) {
-                break;
-            }
-
-            JOptionPane.showMessageDialog(null, "New project name is invalid.");
-        }
-
-        project.rename(name);
-        tabbedPane.remove(projectPanel);
-        insertProjectPanel(projectPanel);
-        tabbedPane.setSelectedComponent(projectPanel);
     }
 
     private void insertProjectPanel(ProjectPanel newProjectPanel) {
@@ -226,19 +135,6 @@ public class MainFrame extends JFrame {
 
         tabbedPane.insertTab(newProject.getName(), null, newProjectPanel,
                 newProject.getAbsolutePath().toString(), insertIndex);
-    }
-
-    // TODO Show confirm dialog
-    private void handleDeleteProjectActionPerformed() {
-        ProjectPanel projectPanel = (ProjectPanel) tabbedPane
-                .getSelectedComponent();
-
-        if (projectPanel == null) {
-            return;
-        }
-
-        projectPanel.getProject().delete();
-        tabbedPane.remove(projectPanel);
     }
 
     private void handleTabbedPaneStateChanged() {
@@ -278,6 +174,132 @@ public class MainFrame extends JFrame {
 
     private void handleExitActionPerformed() {
         dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
+    }
+
+    private class ExitAction extends AbstractAction {
+
+        public ExitAction() {
+            putValue(NAME, "Exit");
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            handleExitActionPerformed();
+        }
+    }
+
+    // TODO Review to distinguish NewProject and OpenProject
+    private class NewProjectAction extends AbstractAction {
+
+        public NewProjectAction() {
+            putValue(NAME, "New project");
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            ProjectDialog projectDialog = new ProjectDialog(application);
+            projectDialog.setVisible(true);
+            Project project = projectDialog.getProject();
+
+            if (project == null) {
+                return;
+            }
+
+            ProjectPanel projectPanel = new ProjectPanel(project);
+            insertProjectPanel(projectPanel);
+            tabbedPane.setSelectedComponent(projectPanel);
+        }
+    }
+
+    private class CloneProject extends AbstractAction {
+
+        public CloneProject() {
+            putValue(NAME, "Clone from");
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            CloneDialog cloneDialog = new CloneDialog(application);
+            cloneDialog.setVisible(true);
+            Project project = cloneDialog.getProject();
+
+            if (project == null) {
+                return;
+            }
+
+            ProjectPanel projectPanel = new ProjectPanel(project);
+            insertProjectPanel(projectPanel);
+            tabbedPane.setSelectedComponent(projectPanel);
+        }
+    }
+
+    private class RenameProjectAction extends AbstractAction {
+
+        public RenameProjectAction() {
+            putValue(NAME, "Rename");
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            ProjectPanel projectPanel = (ProjectPanel) tabbedPane
+                    .getSelectedComponent();
+
+            if (projectPanel == null) {
+                return;
+            }
+
+            Project project = projectPanel.getProject();
+            String name = null;
+
+            while (true) {
+                name = JOptionPane.showInputDialog("Project name",
+                        project.getName());
+
+                if (name == null) {
+                    return;
+                }
+
+                name = name.trim();
+
+                if (!name.isEmpty()) {
+                    break;
+                }
+
+                JOptionPane.showMessageDialog(null, "Project name is invalid.");
+            }
+
+            project.rename(name);
+            tabbedPane.remove(projectPanel);
+            insertProjectPanel(projectPanel);
+            tabbedPane.setSelectedComponent(projectPanel);
+        }
+    }
+
+    private class DeleteProjectAction extends AbstractAction {
+
+        public DeleteProjectAction() {
+            putValue(NAME, "Delete");
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            ProjectPanel projectPanel = (ProjectPanel) tabbedPane
+                    .getSelectedComponent();
+
+            if (projectPanel == null) {
+                return;
+            }
+
+            int option = JOptionPane.showConfirmDialog(null, "Delete?",
+                    "Confirmation", JOptionPane.YES_NO_OPTION);
+
+            if (option != JOptionPane.YES_OPTION) {
+                return;
+            }
+
+            projectPanel.getProject().delete();
+            tabbedPane.remove(projectPanel);
+        }
     }
 
     private class ConfigApplicationAction extends AbstractAction {

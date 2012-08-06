@@ -12,7 +12,6 @@ import java.awt.Point;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.InputEvent;
@@ -28,6 +27,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -37,7 +37,6 @@ import javax.swing.Icon;
 import javax.swing.InputMap;
 import javax.swing.JButton;
 import javax.swing.JComponent;
-import javax.swing.JFileChooser;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -109,29 +108,55 @@ public class ProjectPanel extends JPanel {
 
     private File jumpWorkNodePath;
 
-    private final Action statusAction = new StatusAction();
-    private final Action parentAction = new ParentAction();
-    private final Action openAction = new OpenAction();
-    private final Action childAction = new ChildAction();
-    private final Action rollbackAction = new RollbackAction();
-    private final Action commitAction = new CommitAction();
-    private final Action ignoreAction = new IgnoreAction();
+    private final Icon directoryIcon = UIManager
+            .getIcon("FileView.directoryIcon");
+
     private final Action newFolderAction = new NewFolderAction();
+
     private final Action newFileAction = new NewFileAction();
-    private final Action renameAction = new RenameAction();
-    private final Action deleteAction = new DeleteAction();
+
+    private final Action openAction = new OpenAction();
+
+    private final Action parentAction = new ParentAction();
+
+    private final Action childAction = new ChildAction();
+
+    private final Action refreshAction = new RefreshAction();
+
+    private final Action statusAction = new StatusAction();
+
     private final Action logAction = new LogAction();
+
+    private final Action renameAction = new RenameAction();
+
+    private final Action deleteAction = new DeleteAction();
+
     private final Action diffAction = new DiffAction();
+
+    private final Action ignoreAction = new IgnoreAction();
+
+    private final Action commitAction = new CommitAction();
+
+    private final Action rollbackAction = new RollbackAction();
+
     private final Action discardLastCommitAction = new DiscardLastCommitAction();
-    private final Action bareAction = new BareAction();
-    private final Action connectAction = new ConnectAction();
-    private final Action configAction = new ConfigAction();
-    private final Action disconnectAction = new DisconnectAction();
+
     private final Action pullAction = new PullAction();
+
     private final Action pushAction = new PushAction();
 
-    private final Icon directoryIcon = UIManager
-            .getIcon("FileView.directoryIcon");;
+    private final Action shareAction = new ShareAction();
+
+    private final Action connectAction = new ConnectAction();
+
+    private final Action disconnectAction = new DisconnectAction();
+
+    private final Action configAction = new ConfigAction();
+
+    private final Set<Action> conditionalActions = new HashSet<Action>(
+            Arrays.asList(newFolderAction, newFileAction, openAction,
+                    parentAction, renameAction, deleteAction, diffAction,
+                    ignoreAction));
 
     public ProjectPanel(Project project) {
         this.project = project;
@@ -151,78 +176,49 @@ public class ProjectPanel extends JPanel {
 
         JMenu fileMenu = new JMenu("File");
         menuBar.add(fileMenu);
-
         fileMenu.add(newFolderAction);
         fileMenu.add(newFileAction);
-
         fileMenu.addSeparator();
         fileMenu.add(openAction);
         fileMenu.add(parentAction);
-
         fileMenu.addSeparator();
         fileMenu.add(renameAction);
         fileMenu.add(deleteAction);
-
         fileMenu.addSeparator();
         fileMenu.add(diffAction);
         fileMenu.add(ignoreAction);
-
         fileMenu.addSeparator();
-        JMenuItem exitMenuItem = new JMenuItem("Exit");
-        fileMenu.add(exitMenuItem);
+        fileMenu.add(new JMenuItem("Exit"));
 
         JMenu projectMenu = new JMenu("Project");
         menuBar.add(projectMenu);
-
-        JMenuItem newProjectMenuItem = new JMenuItem("New project");
-        projectMenu.add(newProjectMenuItem);
-        JMenuItem cloneProjectMenuItem = new JMenuItem("Clone from");
-        projectMenu.add(cloneProjectMenuItem);
-
+        projectMenu.add(new JMenuItem("New project"));
+        projectMenu.add(new JMenuItem("Clone from"));
         projectMenu.addSeparator();
-        JMenuItem refreshMenuItem = new JMenuItem("Refresh");
-        refreshMenuItem.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                handleRefreshMenuItemActionPerformed();
-            }
-        });
-        refreshMenuItem.setAccelerator(KeyStroke
-                .getKeyStroke(KeyEvent.VK_F5, 0));
-        projectMenu.add(refreshMenuItem);
+        projectMenu.add(refreshAction);
         projectMenu.add(statusAction);
         projectMenu.add(logAction);
-
         projectMenu.addSeparator();
-        JMenuItem renameProjectMenuItem = new JMenuItem("Rename");
-        projectMenu.add(renameProjectMenuItem);
-        JMenuItem deleteProjectMenuItem = new JMenuItem("Delete");
-        projectMenu.add(deleteProjectMenuItem);
-
+        projectMenu.add(new JMenuItem("Rename"));
+        projectMenu.add(new JMenuItem("Delete"));
         projectMenu.addSeparator();
         projectMenu.add(commitAction);
         projectMenu.add(rollbackAction);
         projectMenu.add(discardLastCommitAction);
-
-        projectMenu.addSeparator();
-        projectMenu.add(bareAction);
-        projectMenu.add(connectAction);
-        projectMenu.add(disconnectAction);
-
         projectMenu.addSeparator();
         projectMenu.add(pullAction);
         projectMenu.add(pushAction);
-
+        projectMenu.addSeparator();
+        projectMenu.add(shareAction);
+        projectMenu.add(connectAction);
+        projectMenu.add(disconnectAction);
         projectMenu.addSeparator();
         projectMenu.add(configAction);
 
         JMenu applicationMenuItem = new JMenu("Application");
         menuBar.add(applicationMenuItem);
-
-        JMenuItem userSettingsMenuItem = new JMenuItem("User settings");
-        applicationMenuItem.add(userSettingsMenuItem);
-        JMenuItem configApplicationMenuItem = new JMenuItem("Config");
-        applicationMenuItem.add(configApplicationMenuItem);
+        applicationMenuItem.add(new JMenuItem("User settings"));
+        applicationMenuItem.add(new JMenuItem("Config"));
 
         JPanel contentPanel = new JPanel();
         add(contentPanel, BorderLayout.CENTER);
@@ -440,6 +436,7 @@ public class ProjectPanel extends JPanel {
 
         handleRefreshMenuItemActionPerformed();
         workFolderTree.requestFocusInWindow();
+        updateActions();
         project.startMonitor();
         shown = true;
     }
@@ -556,6 +553,7 @@ public class ProjectPanel extends JPanel {
     private void handleWorkFolderTreeValueChanged() {
         updateWorkNodeTable();
         updateWorkNodeTextField();
+        updateActions();
     }
 
     private void updateWorkNodeTable() {
@@ -591,6 +589,7 @@ public class ProjectPanel extends JPanel {
 
     private void handleWorkNodeTableValueChanged() {
         updateWorkNodeTextField();
+        updateActions();
     }
 
     private void updateWorkNodeTextField() {
@@ -610,6 +609,34 @@ public class ProjectPanel extends JPanel {
         }
 
         workNodeTextField.setText(currentWorkNode.getAbsolutePath().toString());
+    }
+
+    private void updateActions() {
+        Set<Action> enabledActions = new HashSet<Action>();
+        WorkFolder currentWorkFolder = getCurrentWorkFolder();
+
+        if (currentWorkFolder != null) {
+            enabledActions.add(newFolderAction);
+            enabledActions.add(newFileAction);
+            enabledActions.add(parentAction);
+            WorkNode currentWorkNode = getCurrentWorkNode();
+
+            if (currentWorkNode != null) {
+                enabledActions.add(openAction);
+                enabledActions.add(renameAction);
+                enabledActions.add(deleteAction);
+                enabledActions.add(ignoreAction);
+
+                if (currentWorkNode instanceof WorkFile) {
+                    enabledActions.add(diffAction);
+                }
+            }
+        }
+
+        for (Action conditionalAction : conditionalActions) {
+            conditionalAction.setEnabled(enabledActions
+                    .contains(conditionalAction));
+        }
     }
 
     private void handleOpenActionPerformed() {
@@ -1146,6 +1173,19 @@ public class ProjectPanel extends JPanel {
         }
     }
 
+    private class RefreshAction extends AbstractAction {
+
+        public RefreshAction() {
+            putValue(NAME, "Refresh");
+            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0));
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            handleRefreshMenuItemActionPerformed();
+        }
+    }
+
     private class StatusAction extends AbstractAction {
 
         public StatusAction() {
@@ -1301,7 +1341,7 @@ public class ProjectPanel extends JPanel {
             String name = null;
 
             while (true) {
-                name = JOptionPane.showInputDialog("New folder name", name);
+                name = JOptionPane.showInputDialog("Folder name", name);
 
                 if (name == null) {
                     return;
@@ -1314,8 +1354,7 @@ public class ProjectPanel extends JPanel {
                     break;
                 }
 
-                JOptionPane.showMessageDialog(null,
-                        "New folder name is invalid.");
+                JOptionPane.showMessageDialog(null, "Folder name is invalid.");
             }
 
             currentWorkFolder.createNewFolder(name);
@@ -1339,7 +1378,7 @@ public class ProjectPanel extends JPanel {
             String name = null;
 
             while (true) {
-                name = JOptionPane.showInputDialog("New file name", name);
+                name = JOptionPane.showInputDialog("File name", name);
 
                 if (name == null) {
                     return;
@@ -1352,8 +1391,7 @@ public class ProjectPanel extends JPanel {
                     break;
                 }
 
-                JOptionPane
-                        .showMessageDialog(null, "New file name is invalid.");
+                JOptionPane.showMessageDialog(null, "File name is invalid.");
             }
 
             currentWorkFolder.createNewFile(name);
@@ -1376,10 +1414,12 @@ public class ProjectPanel extends JPanel {
                 return;
             }
 
+            String title = workNode instanceof WorkFolder ? "Folder name"
+                    : "File name";
             String name = workNode.getAbsolutePath().getName();
 
             while (true) {
-                name = JOptionPane.showInputDialog("New name", name);
+                name = JOptionPane.showInputDialog(title, name);
 
                 if (name == null) {
                     return;
@@ -1392,7 +1432,8 @@ public class ProjectPanel extends JPanel {
                     break;
                 }
 
-                JOptionPane.showMessageDialog(null, "New name is invalid.");
+                JOptionPane.showMessageDialog(null,
+                        String.format("%s is invalid.", title));
             }
 
             // TODO Why icon is disapeared just after renamed.
@@ -1512,26 +1553,23 @@ public class ProjectPanel extends JPanel {
         }
     }
 
-    private class BareAction extends AbstractAction {
+    private class ShareAction extends AbstractAction {
 
-        public BareAction() {
-            putValue(NAME, "Bare to");
+        public ShareAction() {
+            putValue(NAME, "Share");
         }
 
-        // TODO Validate input values
+        // TODO Check project status
         @Override
         public void actionPerformed(ActionEvent e) {
-            JFileChooser fileChooser = new JFileChooser();
-            fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+            ShareDialog shareDialog = new ShareDialog(project);
+            shareDialog.setVisible(true);
 
-            if (fileChooser.showOpenDialog(null) != JFileChooser.APPROVE_OPTION) {
+            if (!shareDialog.isSucceeded()) {
                 return;
             }
 
-            File repositoryPath = fileChooser.getSelectedFile();
-            project.bare(repositoryPath);
-            JOptionPane.showMessageDialog(null,
-                    String.format("Bare to '%s'", repositoryPath.toString()));
+            JOptionPane.showMessageDialog(null, "Shared");
         }
     }
 
@@ -1548,14 +1586,12 @@ public class ProjectPanel extends JPanel {
             ConnectDialog connectDialog = new ConnectDialog(gitConfig,
                     branchName);
             connectDialog.setVisible(true);
-            String gitUrlString = connectDialog.getGitUrlString();
 
-            if (gitUrlString == null) {
+            if (!connectDialog.isSucceeded()) {
                 return;
             }
 
-            JOptionPane.showMessageDialog(null,
-                    String.format("Connected: %s", gitUrlString));
+            JOptionPane.showMessageDialog(null, "Connected");
         }
     }
 
@@ -1589,8 +1625,11 @@ public class ProjectPanel extends JPanel {
             }
 
             GitConfig gitConfig = project.findGitConfig();
-            gitConfig.deleteRemoteOrigin(project.getCurrentBranchName());
-            JOptionPane.showMessageDialog(null, String.format("Disconnected"));
+            String branchName = project.getCurrentBranchName();
+            String remoteName = gitConfig.getConnectionRemoteName(branchName);
+            gitConfig.unsetConnection(remoteName, branchName);
+            gitConfig.save();
+            JOptionPane.showMessageDialog(null, "Disconnected");
         }
     }
 

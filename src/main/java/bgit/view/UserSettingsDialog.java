@@ -113,7 +113,8 @@ public class UserSettingsDialog extends AbstractDialog {
     private void handleOkActionPerformed() {
         String name = nameTextField.getText().trim();
         String email = emailTextField.getText().trim();
-        gitConfig.saveUser(name, email);
+        gitConfig.setUser(name, email);
+        gitConfig.save();
         fireWindowClosing();
     }
 }

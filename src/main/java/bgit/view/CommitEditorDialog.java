@@ -38,6 +38,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
 
 import bgit.model.GitCommit;
+import bgit.model.GitConfig;
 import bgit.model.Project;
 import bgit.model.StatusResult;
 import bgit.model.WorkNodeStatus;
@@ -49,15 +50,17 @@ public class CommitEditorDialog extends AbstractDialog {
 
     private final StatusResult statusResult;
 
+    private boolean succeeded;
+
+    private final JTextField authorTextField;
+
+    private final JTextArea messageTextArea;
+
     private final JTextField statusTextField;
 
     private final JTable statusTable;
 
     private final StatusTableModel statusTableModel;
-
-    private final JTextArea messageTextArea;
-
-    private boolean succeeded;
 
     public CommitEditorDialog(Project project, StatusResult statusResult) {
         this.project = project;
@@ -103,24 +106,42 @@ public class CommitEditorDialog extends AbstractDialog {
         splitPane.setLeftComponent(commitPanel);
         GridBagLayout gbl_commitPanel = new GridBagLayout();
         gbl_commitPanel.columnWidths = new int[] { 0, 0, 0 };
-        gbl_commitPanel.rowHeights = new int[] { 0, 0 };
+        gbl_commitPanel.rowHeights = new int[] { 0, 0, 0 };
         gbl_commitPanel.columnWeights = new double[] { 0.0, 1.0,
                 Double.MIN_VALUE };
-        gbl_commitPanel.rowWeights = new double[] { 1.0, Double.MIN_VALUE };
+        gbl_commitPanel.rowWeights = new double[] { 0.0, 1.0, Double.MIN_VALUE };
         commitPanel.setLayout(gbl_commitPanel);
+
+        JLabel lblAuthor = new JLabel("Author");
+        GridBagConstraints gbc_lblAuthor = new GridBagConstraints();
+        gbc_lblAuthor.anchor = GridBagConstraints.EAST;
+        gbc_lblAuthor.insets = new Insets(0, 0, 5, 5);
+        gbc_lblAuthor.gridx = 0;
+        gbc_lblAuthor.gridy = 0;
+        commitPanel.add(lblAuthor, gbc_lblAuthor);
+
+        authorTextField = new JTextField();
+        authorTextField.setEditable(false);
+        GridBagConstraints gbc_authorTextField = new GridBagConstraints();
+        gbc_authorTextField.insets = new Insets(0, 0, 5, 0);
+        gbc_authorTextField.fill = GridBagConstraints.HORIZONTAL;
+        gbc_authorTextField.gridx = 1;
+        gbc_authorTextField.gridy = 0;
+        commitPanel.add(authorTextField, gbc_authorTextField);
+        authorTextField.setColumns(10);
 
         JLabel messageLabel = new JLabel("Message");
         GridBagConstraints gbc_messageLabel = new GridBagConstraints();
         gbc_messageLabel.insets = new Insets(0, 0, 0, 5);
         gbc_messageLabel.gridx = 0;
-        gbc_messageLabel.gridy = 0;
+        gbc_messageLabel.gridy = 1;
         commitPanel.add(messageLabel, gbc_messageLabel);
 
         JScrollPane messageTextAreaScrollPane = new JScrollPane();
         GridBagConstraints gbc_messageTextAreaScrollPane = new GridBagConstraints();
         gbc_messageTextAreaScrollPane.fill = GridBagConstraints.BOTH;
         gbc_messageTextAreaScrollPane.gridx = 1;
-        gbc_messageTextAreaScrollPane.gridy = 0;
+        gbc_messageTextAreaScrollPane.gridy = 1;
         commitPanel.add(messageTextAreaScrollPane,
                 gbc_messageTextAreaScrollPane);
 
@@ -227,6 +248,9 @@ public class CommitEditorDialog extends AbstractDialog {
     }
 
     private void handleWindowOpened() {
+        GitConfig gitConfig = project.findGitConfig();
+        authorTextField.setText(String.format("%s <%s>",
+                gitConfig.getUserName(), gitConfig.getUserEmail()));
         String projectPathString = statusResult.getProjectPath().toString();
 
         for (Map.Entry<String, EnumSet<WorkNodeStatus>> entry : statusResult
@@ -236,6 +260,8 @@ public class CommitEditorDialog extends AbstractDialog {
             statusTableModel.addRow(new Object[] { true, relativePathString,
                     entry.getValue() });
         }
+
+        messageTextArea.requestFocusInWindow();
     }
 
     private void handleStatusTableValueChanged() {

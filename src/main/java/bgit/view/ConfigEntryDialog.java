@@ -55,7 +55,7 @@ public class ConfigEntryDialog extends AbstractDialog {
         okButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                handleOkButtonActionPerformed();
+                handleOkActionPerformed();
             }
         });
         footerPanel.add(okButton);
@@ -119,14 +119,17 @@ public class ConfigEntryDialog extends AbstractDialog {
         if (key != null) {
             keyTextField.setText(key);
             keyTextField.setEditable(false);
-        }
 
-        if (oldValue != null) {
-            valueTextField.setText(oldValue);
+            if (oldValue != null) {
+                valueTextField.setText(oldValue);
+                valueTextField.selectAll();
+            }
+
+            valueTextField.requestFocusInWindow();
         }
     }
 
-    private void handleOkButtonActionPerformed() {
+    private void handleOkActionPerformed() {
         String key = keyTextField.getText().trim();
 
         if (!GitConfig.isKeyValid(key)) {
@@ -136,7 +139,8 @@ public class ConfigEntryDialog extends AbstractDialog {
         }
 
         String value = valueTextField.getText().trim();
-        gitConfig.save(key, value);
+        gitConfig.set(key, value);
+        gitConfig.save();
         this.key = key;
         this.newValue = value;
         fireWindowClosing();

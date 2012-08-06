@@ -26,7 +26,7 @@ public class ProjectDialog extends AbstractDialog {
 
     private Project project;
 
-    private final JTextField pathTextField;
+    private final JTextField projectPathTextField;
 
     private final JTextField nameTextField;
 
@@ -44,7 +44,7 @@ public class ProjectDialog extends AbstractDialog {
         okButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                handleOkButtonActionPerformed();
+                handleOkActionPerformed();
             }
         });
         footerPanel.add(okButton);
@@ -68,43 +68,43 @@ public class ProjectDialog extends AbstractDialog {
         gbl_projectPanel.rowWeights = new double[] { 0.0, 0.0, Double.MIN_VALUE };
         projectPanel.setLayout(gbl_projectPanel);
 
-        JLabel lblProjectPath = new JLabel("Project path");
-        GridBagConstraints gbc_lblProjectPath = new GridBagConstraints();
-        gbc_lblProjectPath.anchor = GridBagConstraints.EAST;
-        gbc_lblProjectPath.insets = new Insets(0, 0, 5, 5);
-        gbc_lblProjectPath.gridx = 0;
-        gbc_lblProjectPath.gridy = 0;
-        projectPanel.add(lblProjectPath, gbc_lblProjectPath);
+        JLabel projectPathLabel = new JLabel("New project path");
+        GridBagConstraints gbc_projectPathLabel = new GridBagConstraints();
+        gbc_projectPathLabel.anchor = GridBagConstraints.EAST;
+        gbc_projectPathLabel.insets = new Insets(0, 0, 5, 5);
+        gbc_projectPathLabel.gridx = 0;
+        gbc_projectPathLabel.gridy = 0;
+        projectPanel.add(projectPathLabel, gbc_projectPathLabel);
 
-        pathTextField = new JTextField();
-        GridBagConstraints gbc_pathTextField = new GridBagConstraints();
-        gbc_pathTextField.insets = new Insets(0, 0, 5, 5);
-        gbc_pathTextField.fill = GridBagConstraints.HORIZONTAL;
-        gbc_pathTextField.gridx = 1;
-        gbc_pathTextField.gridy = 0;
-        projectPanel.add(pathTextField, gbc_pathTextField);
-        pathTextField.setColumns(10);
+        projectPathTextField = new JTextField();
+        GridBagConstraints gbc_projectPathTextField = new GridBagConstraints();
+        gbc_projectPathTextField.insets = new Insets(0, 0, 5, 5);
+        gbc_projectPathTextField.fill = GridBagConstraints.HORIZONTAL;
+        gbc_projectPathTextField.gridx = 1;
+        gbc_projectPathTextField.gridy = 0;
+        projectPanel.add(projectPathTextField, gbc_projectPathTextField);
+        projectPathTextField.setColumns(10);
 
-        JButton browseButton = new JButton("Browse");
-        browseButton.addActionListener(new ActionListener() {
+        JButton projectPathFolderButton = new JButton("Folder");
+        projectPathFolderButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                handleBrowseButtonActionPerformed();
+                handleProjectPathFolderActionPerformed();
             }
         });
-        GridBagConstraints gbc_browseButton = new GridBagConstraints();
-        gbc_browseButton.insets = new Insets(0, 0, 5, 0);
-        gbc_browseButton.gridx = 2;
-        gbc_browseButton.gridy = 0;
-        projectPanel.add(browseButton, gbc_browseButton);
+        GridBagConstraints gbc_projectPathFolderButton = new GridBagConstraints();
+        gbc_projectPathFolderButton.insets = new Insets(0, 0, 5, 0);
+        gbc_projectPathFolderButton.gridx = 2;
+        gbc_projectPathFolderButton.gridy = 0;
+        projectPanel.add(projectPathFolderButton, gbc_projectPathFolderButton);
 
-        JLabel lblProjectName = new JLabel("Project name");
-        GridBagConstraints gbc_lblProjectName = new GridBagConstraints();
-        gbc_lblProjectName.anchor = GridBagConstraints.EAST;
-        gbc_lblProjectName.insets = new Insets(0, 0, 0, 5);
-        gbc_lblProjectName.gridx = 0;
-        gbc_lblProjectName.gridy = 1;
-        projectPanel.add(lblProjectName, gbc_lblProjectName);
+        JLabel projectNameLabel = new JLabel("Project name");
+        GridBagConstraints gbc_projectNameLabel = new GridBagConstraints();
+        gbc_projectNameLabel.anchor = GridBagConstraints.EAST;
+        gbc_projectNameLabel.insets = new Insets(0, 0, 0, 5);
+        gbc_projectNameLabel.gridx = 0;
+        gbc_projectNameLabel.gridy = 1;
+        projectPanel.add(projectNameLabel, gbc_projectNameLabel);
 
         nameTextField = new JTextField();
         GridBagConstraints gbc_nameTextField = new GridBagConstraints();
@@ -116,7 +116,7 @@ public class ProjectDialog extends AbstractDialog {
         nameTextField.setColumns(10);
     }
 
-    private void handleBrowseButtonActionPerformed() {
+    private void handleProjectPathFolderActionPerformed() {
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 
@@ -125,16 +125,16 @@ public class ProjectDialog extends AbstractDialog {
         }
 
         File absolutePath = fileChooser.getSelectedFile();
-        pathTextField.setText(absolutePath.toString());
+        projectPathTextField.setText(absolutePath.toString());
         nameTextField.setText(absolutePath.getName());
     }
 
-    private void handleOkButtonActionPerformed() {
-        File absolutePath = new File(pathTextField.getText().trim());
+    private void handleOkActionPerformed() {
+        File absolutePath = new File(projectPathTextField.getText().trim());
 
         if (!absolutePath.isDirectory()) {
             JOptionPane.showMessageDialog(null, "Project path is invalid.");
-            pathTextField.requestFocusInWindow();
+            projectPathTextField.requestFocusInWindow();
             return;
         }
 

@@ -291,7 +291,7 @@ public class CommitViewerDialog extends AbstractDialog {
     private void handleWindowOpened() {
         idTextField.setText(gitCommit.getFullIdString());
         authorTextField.setText(gitCommit.getAuthor());
-        dateTextField.setText(gitCommit.getDateCommitted().toString());
+        dateTextField.setText(gitCommit.getDateAuthored().toString());
         messagetextArea.setText(gitCommit.getFullMessage());
 
         parentGitCommits = gitCommit.findParentGitCommits();
@@ -299,7 +299,7 @@ public class CommitViewerDialog extends AbstractDialog {
                 .setText(String.format("(%d)", parentGitCommits.size()));
 
         for (GitCommit parentGitCommit : parentGitCommits) {
-            parentComboBox.addItem(parentGitCommit.toString());
+            parentComboBox.addItem(parentGitCommit.getOneline());
         }
 
         updateDiffTable();

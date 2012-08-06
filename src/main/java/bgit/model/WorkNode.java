@@ -2,7 +2,6 @@ package bgit.model;
 
 import java.io.File;
 import java.sql.Timestamp;
-import java.util.Date;
 
 import bgit.CommonsUtils;
 
@@ -70,7 +69,7 @@ public abstract class WorkNode {
         return "";
     }
 
-    public Date getDateLastModified() {
+    public Timestamp getDateLastModified() {
         return new Timestamp(absolutePath.lastModified());
     }
 

@@ -192,6 +192,11 @@ public class ConfigDialog extends AbstractDialog {
         int modelRowIndex = configTable.convertRowIndexToModel(viewRowIndex);
         String key = (String) configTableModel.getValueAt(modelRowIndex, 0);
         String value = (String) configTableModel.getValueAt(modelRowIndex, 1);
+
+        if (value == null) {
+            value = "";
+        }
+
         configTextField.setText(String.format("%s '%s'", key, value));
     }
 
@@ -250,7 +255,8 @@ public class ConfigDialog extends AbstractDialog {
 
         int modelRowIndex = configTable.convertRowIndexToModel(viewRowIndex);
         String key = (String) configTableModel.getValueAt(modelRowIndex, 0);
-        gitConfig.delete(key);
+        gitConfig.unset(key);
+        gitConfig.save();
         configTableModel.removeRow(modelRowIndex);
     }
 

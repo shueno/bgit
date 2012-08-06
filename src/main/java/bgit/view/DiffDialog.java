@@ -227,14 +227,14 @@ public class DiffDialog extends AbstractDialog {
             oldTextField.setText("Empty");
 
         } else {
-            oldTextField.setText(oldGitCommit.toString());
+            oldTextField.setText(oldGitCommit.getOneline());
         }
 
         if (newGitCommit == null) {
             newTextField.setText("Working tree");
 
         } else {
-            newTextField.setText(newGitCommit.toString());
+            newTextField.setText(newGitCommit.getOneline());
         }
 
         GitDiffResult gitDiffResult = project.diff(relativePathString,

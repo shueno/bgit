@@ -26,10 +26,11 @@ public class CloneDialog extends AbstractDialog {
 
     private Project project;
 
-    private final JTextField urlTextField;
+    private final JTextField repositoryUrlTextField;
 
-    private final JTextField nameTextField;
-    private final JTextField pathTextField;
+    private final JTextField projectNameTextField;
+
+    private final JTextField projectPathTextField;
 
     public CloneDialog(Application application) {
         this.application = application;
@@ -70,85 +71,86 @@ public class CloneDialog extends AbstractDialog {
                 Double.MIN_VALUE };
         projectPanel.setLayout(gbl_projectPanel);
 
-        JLabel lblProjectPath = new JLabel("Git URL");
-        GridBagConstraints gbc_lblProjectPath = new GridBagConstraints();
-        gbc_lblProjectPath.anchor = GridBagConstraints.EAST;
-        gbc_lblProjectPath.insets = new Insets(0, 0, 5, 5);
-        gbc_lblProjectPath.gridx = 0;
-        gbc_lblProjectPath.gridy = 0;
-        projectPanel.add(lblProjectPath, gbc_lblProjectPath);
+        JLabel repositoryUrlLabel = new JLabel("Repository URL");
+        GridBagConstraints gbc_repositoryUrlLabel = new GridBagConstraints();
+        gbc_repositoryUrlLabel.anchor = GridBagConstraints.EAST;
+        gbc_repositoryUrlLabel.insets = new Insets(0, 0, 5, 5);
+        gbc_repositoryUrlLabel.gridx = 0;
+        gbc_repositoryUrlLabel.gridy = 0;
+        projectPanel.add(repositoryUrlLabel, gbc_repositoryUrlLabel);
 
-        urlTextField = new JTextField();
-        GridBagConstraints gbc_urlTextField = new GridBagConstraints();
-        gbc_urlTextField.insets = new Insets(0, 0, 5, 5);
-        gbc_urlTextField.fill = GridBagConstraints.HORIZONTAL;
-        gbc_urlTextField.gridx = 1;
-        gbc_urlTextField.gridy = 0;
-        projectPanel.add(urlTextField, gbc_urlTextField);
-        urlTextField.setColumns(10);
+        repositoryUrlTextField = new JTextField();
+        GridBagConstraints gbc_repositoryUrlTextField = new GridBagConstraints();
+        gbc_repositoryUrlTextField.insets = new Insets(0, 0, 5, 5);
+        gbc_repositoryUrlTextField.fill = GridBagConstraints.HORIZONTAL;
+        gbc_repositoryUrlTextField.gridx = 1;
+        gbc_repositoryUrlTextField.gridy = 0;
+        projectPanel.add(repositoryUrlTextField, gbc_repositoryUrlTextField);
+        repositoryUrlTextField.setColumns(10);
 
-        JButton urlBrowseButton = new JButton("Browse");
-        urlBrowseButton.addActionListener(new ActionListener() {
+        JButton repositoryUrlFolderButton = new JButton("Folder");
+        repositoryUrlFolderButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                handleUrlBrowseActionPerformed();
+                handleRepositoryUrlFolderActionPerformed();
             }
         });
-        GridBagConstraints gbc_urlButton = new GridBagConstraints();
-        gbc_urlButton.insets = new Insets(0, 0, 5, 0);
-        gbc_urlButton.gridx = 2;
-        gbc_urlButton.gridy = 0;
-        projectPanel.add(urlBrowseButton, gbc_urlButton);
+        GridBagConstraints gbc_repositoryUrlFolderButton = new GridBagConstraints();
+        gbc_repositoryUrlFolderButton.insets = new Insets(0, 0, 5, 0);
+        gbc_repositoryUrlFolderButton.gridx = 2;
+        gbc_repositoryUrlFolderButton.gridy = 0;
+        projectPanel.add(repositoryUrlFolderButton,
+                gbc_repositoryUrlFolderButton);
 
-        JLabel lblProjectPath_1 = new JLabel("Project path");
-        GridBagConstraints gbc_lblProjectPath_1 = new GridBagConstraints();
-        gbc_lblProjectPath_1.anchor = GridBagConstraints.EAST;
-        gbc_lblProjectPath_1.insets = new Insets(0, 0, 5, 5);
-        gbc_lblProjectPath_1.gridx = 0;
-        gbc_lblProjectPath_1.gridy = 1;
-        projectPanel.add(lblProjectPath_1, gbc_lblProjectPath_1);
+        JLabel projectPathLabel = new JLabel("New project path");
+        GridBagConstraints gbc_projectPathLabel = new GridBagConstraints();
+        gbc_projectPathLabel.anchor = GridBagConstraints.EAST;
+        gbc_projectPathLabel.insets = new Insets(0, 0, 5, 5);
+        gbc_projectPathLabel.gridx = 0;
+        gbc_projectPathLabel.gridy = 1;
+        projectPanel.add(projectPathLabel, gbc_projectPathLabel);
 
-        pathTextField = new JTextField();
-        GridBagConstraints gbc_pathTextField = new GridBagConstraints();
-        gbc_pathTextField.insets = new Insets(0, 0, 5, 5);
-        gbc_pathTextField.fill = GridBagConstraints.HORIZONTAL;
-        gbc_pathTextField.gridx = 1;
-        gbc_pathTextField.gridy = 1;
-        projectPanel.add(pathTextField, gbc_pathTextField);
-        pathTextField.setColumns(10);
+        projectPathTextField = new JTextField();
+        GridBagConstraints gbc_projectPathTextField = new GridBagConstraints();
+        gbc_projectPathTextField.insets = new Insets(0, 0, 5, 5);
+        gbc_projectPathTextField.fill = GridBagConstraints.HORIZONTAL;
+        gbc_projectPathTextField.gridx = 1;
+        gbc_projectPathTextField.gridy = 1;
+        projectPanel.add(projectPathTextField, gbc_projectPathTextField);
+        projectPathTextField.setColumns(10);
 
-        JButton pathBrowseButton = new JButton("Browse");
-        pathBrowseButton.addActionListener(new ActionListener() {
+        JButton projectPathFolderButton = new JButton("Folder");
+        projectPathFolderButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                handlePathBrowseActionPerformed();
+                handleProjectPathFolderActionPerformed();
             }
         });
-        GridBagConstraints gbc_pathButton = new GridBagConstraints();
-        gbc_pathButton.insets = new Insets(0, 0, 5, 0);
-        gbc_pathButton.gridx = 2;
-        gbc_pathButton.gridy = 1;
-        projectPanel.add(pathBrowseButton, gbc_pathButton);
+        GridBagConstraints gbc_projectPathFolderButton = new GridBagConstraints();
+        gbc_projectPathFolderButton.insets = new Insets(0, 0, 5, 0);
+        gbc_projectPathFolderButton.gridx = 2;
+        gbc_projectPathFolderButton.gridy = 1;
+        projectPanel.add(projectPathFolderButton, gbc_projectPathFolderButton);
 
-        JLabel lblProjectName = new JLabel("Project name");
-        GridBagConstraints gbc_lblProjectName = new GridBagConstraints();
-        gbc_lblProjectName.anchor = GridBagConstraints.EAST;
-        gbc_lblProjectName.insets = new Insets(0, 0, 0, 5);
-        gbc_lblProjectName.gridx = 0;
-        gbc_lblProjectName.gridy = 2;
-        projectPanel.add(lblProjectName, gbc_lblProjectName);
+        JLabel projectNameLabel = new JLabel("Project name");
+        GridBagConstraints gbc_projectNameLabel = new GridBagConstraints();
+        gbc_projectNameLabel.anchor = GridBagConstraints.EAST;
+        gbc_projectNameLabel.insets = new Insets(0, 0, 0, 5);
+        gbc_projectNameLabel.gridx = 0;
+        gbc_projectNameLabel.gridy = 2;
+        projectPanel.add(projectNameLabel, gbc_projectNameLabel);
 
-        nameTextField = new JTextField();
-        GridBagConstraints gbc_nameTextField = new GridBagConstraints();
-        gbc_nameTextField.insets = new Insets(0, 0, 0, 5);
-        gbc_nameTextField.fill = GridBagConstraints.HORIZONTAL;
-        gbc_nameTextField.gridx = 1;
-        gbc_nameTextField.gridy = 2;
-        projectPanel.add(nameTextField, gbc_nameTextField);
-        nameTextField.setColumns(10);
+        projectNameTextField = new JTextField();
+        GridBagConstraints gbc_projectNameTextField = new GridBagConstraints();
+        gbc_projectNameTextField.insets = new Insets(0, 0, 0, 5);
+        gbc_projectNameTextField.fill = GridBagConstraints.HORIZONTAL;
+        gbc_projectNameTextField.gridx = 1;
+        gbc_projectNameTextField.gridy = 2;
+        projectPanel.add(projectNameTextField, gbc_projectNameTextField);
+        projectNameTextField.setColumns(10);
     }
 
-    private void handleUrlBrowseActionPerformed() {
+    private void handleRepositoryUrlFolderActionPerformed() {
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 
@@ -157,10 +159,10 @@ public class CloneDialog extends AbstractDialog {
         }
 
         File path = fileChooser.getSelectedFile();
-        urlTextField.setText(path.toString());
+        repositoryUrlTextField.setText(path.toString());
     }
 
-    private void handlePathBrowseActionPerformed() {
+    private void handleProjectPathFolderActionPerformed() {
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 
@@ -169,36 +171,37 @@ public class CloneDialog extends AbstractDialog {
         }
 
         File path = fileChooser.getSelectedFile();
-        pathTextField.setText(path.toString());
-        nameTextField.setText(path.getName());
+        projectPathTextField.setText(path.toString());
+        projectNameTextField.setText(path.getName());
     }
 
     private void handleOkActionPerformed() {
-        String gitUrlString = urlTextField.getText().trim();
+        String repositoryUrlString = repositoryUrlTextField.getText().trim();
 
-        if (!Application.isGitUrlValid(gitUrlString)) {
-            JOptionPane.showMessageDialog(null, "Git URL is invalid.");
-            urlTextField.requestFocusInWindow();
+        if (!Application.isRepositoryUrlValid(repositoryUrlString)) {
+            JOptionPane.showMessageDialog(null, "Repository URL is invalid.");
+            repositoryUrlTextField.requestFocusInWindow();
             return;
         }
 
-        File projectPath = new File(pathTextField.getText().trim());
+        File projectPath = new File(projectPathTextField.getText().trim());
 
         if (!projectPath.isDirectory()) {
             JOptionPane.showMessageDialog(null, "Project path is invalid.");
-            pathTextField.requestFocusInWindow();
+            projectPathTextField.requestFocusInWindow();
             return;
         }
 
-        String name = nameTextField.getText().trim();
+        String projectName = projectNameTextField.getText().trim();
 
-        if (name.isEmpty()) {
+        if (projectName.isEmpty()) {
             JOptionPane.showMessageDialog(null, "Project name is invalid.");
-            nameTextField.requestFocusInWindow();
+            projectNameTextField.requestFocusInWindow();
             return;
         }
 
-        project = application.cloneProject(gitUrlString, projectPath, name);
+        project = application.cloneProject(repositoryUrlString, projectPath,
+                projectName);
         fireWindowClosing();
     }
 

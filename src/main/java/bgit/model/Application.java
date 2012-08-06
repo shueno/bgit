@@ -67,22 +67,22 @@ public class Application {
         return writeProject(projectPath, name);
     }
 
-    public static boolean isGitUrlValid(String gitUrlString) {
+    public static boolean isRepositoryUrlValid(String repositoryUrlString) {
 
         try {
-            new URIish(gitUrlString);
+            new URIish(repositoryUrlString);
 
         } catch (URISyntaxException e) {
             return false;
         }
 
-        return gitUrlString.endsWith(".git");
+        return repositoryUrlString.endsWith(".git");
     }
 
-    public Project cloneProject(String gitUrlString, File projectPath,
+    public Project cloneProject(String repositoryUrlString, File projectPath,
             String name) {
         CloneCommand cloneCommand = Git.cloneRepository();
-        cloneCommand.setURI(gitUrlString);
+        cloneCommand.setURI(repositoryUrlString);
         cloneCommand.setDirectory(projectPath);
         GitUtils.call(cloneCommand);
         return writeProject(projectPath, name);

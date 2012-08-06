@@ -35,6 +35,6 @@ public class Main implements Runnable {
         Preferences preferences = Preferences.userNodeForPackage(Main.class);
         Application application = new Application(preferences);
         MainFrame mainFrame = new MainFrame(application);
-        mainFrame.showFrame();
+        mainFrame.setVisible(true);
     }
 }
