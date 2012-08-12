@@ -9,14 +9,17 @@ import org.eclipse.jgit.api.AddCommand;
 import org.eclipse.jgit.api.CleanCommand;
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.CommitCommand;
+import org.eclipse.jgit.api.DeleteTagCommand;
 import org.eclipse.jgit.api.DiffCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.InitCommand;
+import org.eclipse.jgit.api.ListTagCommand;
 import org.eclipse.jgit.api.LogCommand;
 import org.eclipse.jgit.api.PullCommand;
 import org.eclipse.jgit.api.PullResult;
 import org.eclipse.jgit.api.PushCommand;
 import org.eclipse.jgit.api.ResetCommand;
+import org.eclipse.jgit.api.TagCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.dircache.DirCache;
@@ -25,6 +28,7 @@ import org.eclipse.jgit.lib.AnyObjectId;
 import org.eclipse.jgit.lib.BranchTrackingStatus;
 import org.eclipse.jgit.lib.IndexDiff;
 import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.ObjectLoader;
 import org.eclipse.jgit.lib.ObjectReader;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
@@ -236,6 +240,46 @@ public class GitUtils {
 
         try {
             return cleanCommand.call();
+
+        } catch (GitAPIException e) {
+            throw new ApplicationException(e);
+        }
+    }
+
+    public static List<Ref> call(ListTagCommand listTagCommand) {
+
+        try {
+            return listTagCommand.call();
+
+        } catch (GitAPIException e) {
+            throw new ApplicationException(e);
+        }
+    }
+
+    public static ObjectLoader open(Repository repository, AnyObjectId objectId) {
+
+        try {
+            return repository.open(objectId);
+
+        } catch (IOException e) {
+            throw new ApplicationException(e);
+        }
+    }
+
+    public static List<String> call(DeleteTagCommand deleteTagCommand) {
+
+        try {
+            return deleteTagCommand.call();
+
+        } catch (GitAPIException e) {
+            throw new ApplicationException(e);
+        }
+    }
+
+    public static Ref call(TagCommand tagCommand) {
+
+        try {
+            return tagCommand.call();
 
         } catch (GitAPIException e) {
             throw new ApplicationException(e);

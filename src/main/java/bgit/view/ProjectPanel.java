@@ -127,6 +127,8 @@ public class ProjectPanel extends JPanel {
 
     private final Action logAction = new LogAction();
 
+    private final Action tagsAction = new TagsAction();
+
     private final Action renameAction = new RenameAction();
 
     private final Action deleteAction = new DeleteAction();
@@ -198,6 +200,7 @@ public class ProjectPanel extends JPanel {
         projectMenu.add(refreshAction);
         projectMenu.add(statusAction);
         projectMenu.add(logAction);
+        projectMenu.add(tagsAction);
         projectMenu.addSeparator();
         projectMenu.add(new JMenuItem("Rename"));
         projectMenu.add(new JMenuItem("Delete"));
@@ -434,22 +437,19 @@ public class ProjectPanel extends JPanel {
             return;
         }
 
-        handleRefreshMenuItemActionPerformed();
+        doRefresh();
         workFolderTree.requestFocusInWindow();
         updateActions();
         project.startMonitor();
         shown = true;
     }
 
-    private void handleRefreshMenuItemActionPerformed() {
-        doRefresh();
-    }
-
     private void doRefresh() {
-        project.removeWorkNodeListener(workNodeListener);
         long time = System.currentTimeMillis();
 
         try {
+            ViewHelper.setWaitCursor(this);
+            project.removeWorkNodeListener(workNodeListener);
             WorkNode jumpWorkNode = getCurrentWorkNode();
             WorkFolder jumpWorkFolder = null;
 
@@ -478,6 +478,7 @@ public class ProjectPanel extends JPanel {
             String s = String.format("Refresh: %dms",
                     System.currentTimeMillis() - time);
             footerTextField.setText(s);
+            ViewHelper.setDefaultCursor(this);
             project.addWorkNodeListener(workNodeListener);
         }
     }
@@ -1182,7 +1183,7 @@ public class ProjectPanel extends JPanel {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            handleRefreshMenuItemActionPerformed();
+            doRefresh();
         }
     }
 
@@ -1508,6 +1509,19 @@ public class ProjectPanel extends JPanel {
         }
     }
 
+    private class TagsAction extends AbstractAction {
+
+        public TagsAction() {
+            putValue(NAME, "Tags");
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            TagsDialog tagsDialog = new TagsDialog(project);
+            tagsDialog.setVisible(true);
+        }
+    }
+
     private class DiffAction extends AbstractAction {
 
         public DiffAction() {
@@ -1642,6 +1656,13 @@ public class ProjectPanel extends JPanel {
         // TODO Check preconditions of the project
         @Override
         public void actionPerformed(ActionEvent e) {
+            int option = JOptionPane.showConfirmDialog(null, "Pull?",
+                    "Confirmation", JOptionPane.YES_NO_OPTION);
+
+            if (option != JOptionPane.YES_OPTION) {
+                return;
+            }
+
             GitPullResult gitPullResult = project.pull();
             JOptionPane.showMessageDialog(null, gitPullResult.getMessage());
 

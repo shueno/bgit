@@ -200,9 +200,15 @@ public class CloneDialog extends AbstractDialog {
             return;
         }
 
-        project = application.cloneProject(repositoryUrlString, projectPath,
-                projectName);
-        fireWindowClosing();
+        try {
+            ViewHelper.setWaitCursor(this);
+            project = application.cloneProject(repositoryUrlString,
+                    projectPath, projectName);
+            fireWindowClosing();
+
+        } finally {
+            ViewHelper.setDefaultCursor(this);
+        }
     }
 
     public Project getProject() {

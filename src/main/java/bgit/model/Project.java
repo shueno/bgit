@@ -21,12 +21,14 @@ import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.CommitCommand;
 import org.eclipse.jgit.api.DiffCommand;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.ListTagCommand;
 import org.eclipse.jgit.api.LogCommand;
 import org.eclipse.jgit.api.PullCommand;
 import org.eclipse.jgit.api.PullResult;
 import org.eclipse.jgit.api.PushCommand;
 import org.eclipse.jgit.api.ResetCommand;
 import org.eclipse.jgit.api.ResetCommand.ResetType;
+import org.eclipse.jgit.api.TagCommand;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.lib.BranchConfig;
 import org.eclipse.jgit.lib.BranchTrackingStatus;
@@ -78,6 +80,27 @@ public class Project implements Comparable<Project> {
         this.statusResult = new StatusResult(absolutePath, null);
     }
 
+    public GitTag createTag(String tagName, String message) {
+        TagCommand tagCommand = git.tag();
+        tagCommand.setName(tagName);
+        tagCommand.setMessage(message);
+        Ref ref = GitUtils.call(tagCommand);
+        return new GitTag(git, ref);
+    }
+
+    public Iterable<GitTag> findGitTags() {
+        ListTagCommand listTagCommand = git.tagList();
+        List<Ref> refs = GitUtils.call(listTagCommand);
+        List<GitTag> gitTags = new ArrayList<GitTag>();
+
+        for (Ref ref : refs) {
+            GitTag gitTag = new GitTag(git, ref);
+            gitTags.add(gitTag);
+        }
+
+        return gitTags;
+    }
+
     public GitBranchTrackingStatus findGitBranchTrackingStatus(String branchName) {
         BranchTrackingStatus branchTrackingStatus = GitUtils.of(repository,
                 branchName);
@@ -100,18 +123,15 @@ public class Project implements Comparable<Project> {
     }
 
     public List<GitPushResult> push() {
+        PushCommand pushCommand = git.push();
+        Iterable<PushResult> pushResults = GitUtils.call(pushCommand);
         List<GitPushResult> gitPushResults = new ArrayList<GitPushResult>();
 
-        for (PushResult pushResult : push(git)) {
+        for (PushResult pushResult : pushResults) {
             gitPushResults.add(new GitPushResult(pushResult));
         }
 
         return gitPushResults;
-    }
-
-    private static Iterable<PushResult> push(Git git) {
-        PushCommand pushCommand = git.push();
-        return GitUtils.call(pushCommand);
     }
 
     public GitPullResult pull() {
