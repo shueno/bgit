@@ -5,55 +5,61 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.jgit.api.DeleteTagCommand;
-import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.PushCommand;
-import org.eclipse.jgit.errors.CorruptObjectException;
-import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
-import org.eclipse.jgit.lib.ObjectLoader;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevObject;
 import org.eclipse.jgit.revwalk.RevTag;
+import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.transport.PushResult;
 
-import bgit.ApplicationException;
 import bgit.GitUtils;
 
 public class GitTag {
 
-    private final Git git;
+    private final Project project;
 
     private final Ref ref;
 
     private final RevTag revTag;
 
-    GitTag(Git git, Ref ref) {
-        this.git = git;
-        this.ref = ref;
-        Repository repository = git.getRepository();
-        ObjectId objectId = ref.getObjectId();
-        ObjectLoader objectLoader = GitUtils.open(repository, objectId);
+    private final GitCommit gitCommit;
 
-        if (objectLoader.getType() == Constants.OBJ_TAG) {
-            revTag = parse(objectLoader.getBytes());
+    GitTag(Project project, Ref ref) {
+        this.project = project;
+        this.ref = ref;
+
+        Repository repository = project.getGit().getRepository();
+        RevWalk revWalk = new RevWalk(repository);
+        ObjectId id = ref.getObjectId();
+        RevObject revObject = GitUtils.parseAny(revWalk, id);
+
+        if (revObject instanceof RevTag) {
+            revTag = (RevTag) revObject;
+            revObject = revTag.getObject();
+            GitUtils.parseHeaders(revWalk, revObject);
 
         } else {
             revTag = null;
         }
-    }
 
-    private static RevTag parse(byte[] bytes) {
+        if (revObject instanceof RevCommit) {
+            RevCommit revCommit = (RevCommit) revObject;
+            gitCommit = new GitCommit(project, revCommit);
 
-        try {
-            return RevTag.parse(bytes);
-
-        } catch (CorruptObjectException e) {
-            throw new ApplicationException(e);
+        } else {
+            gitCommit = null;
         }
     }
 
+    public GitCommit findGitCommit() {
+        return gitCommit;
+    }
+
     public List<GitPushResult> push() {
-        PushCommand pushCommand = git.push();
+        PushCommand pushCommand = project.getGit().push();
         pushCommand.add(ref);
         Iterable<PushResult> pushResults = GitUtils.call(pushCommand);
         List<GitPushResult> gitPushResults = new ArrayList<GitPushResult>();
@@ -66,7 +72,7 @@ public class GitTag {
     }
 
     public void delete() {
-        DeleteTagCommand deleteTagCommand = git.tagDelete();
+        DeleteTagCommand deleteTagCommand = project.getGit().tagDelete();
         deleteTagCommand.setTags(getPathString());
         GitUtils.call(deleteTagCommand);
     }

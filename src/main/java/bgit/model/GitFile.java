@@ -1,33 +1,24 @@
 package bgit.model;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 
 import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.ObjectLoader;
+import org.eclipse.jgit.lib.ObjectStream;
 
-import bgit.ApplicationException;
+import bgit.CommonsUtils;
+import bgit.GitUtils;
+import bgit.JdkUtils;
 
-public class GitFile {
-
-    private final Project project;
-
-    private final ObjectId objectId;
-
-    private final String relativePathString;
+public class GitFile extends GitNode {
 
     private File temporaryPath;
 
     GitFile(Project project, ObjectId objectId, String relativePathString) {
-        this.project = project;
-        this.objectId = objectId;
-        this.relativePathString = relativePathString;
+        super(project, objectId, relativePathString);
     }
 
-    // TODO Review method name.
-    public File getTemporaryPath() {
+    public File createTemporaryFile() {
 
         if (temporaryPath != null && temporaryPath.isFile()) {
             return temporaryPath;
@@ -40,47 +31,19 @@ public class GitFile {
             suffix = relativePathString.substring(lastIndex);
         }
 
-        // TODO Use IOUtils.copy and handle IOExcetpion on each method
-        try {
-            temporaryPath = File.createTempFile("git_" + objectId.getName()
-                    + "_", suffix);
+        String prefix = "git_" + objectId.getName() + "_";
+        temporaryPath = JdkUtils.createTempFile(prefix, suffix);
 
-            BufferedOutputStream out = new BufferedOutputStream(
-                    new FileOutputStream(temporaryPath));
+        ObjectLoader objectLoader = GitUtils.open(project.getGit()
+                .getRepository(), objectId);
+        ObjectStream openStream = GitUtils.openStream(objectLoader);
 
-            try {
-                BufferedInputStream in = new BufferedInputStream(project
-                        .getGit().getRepository().open(objectId).openStream());
-
-                try {
-                    byte[] buf = new byte[1024];
-                    int len = 0;
-
-                    while ((len = in.read(buf)) > 0) {
-                        out.write(buf, 0, len);
-                    }
-
-                } finally {
-                    in.close();
-                }
-
-            } finally {
-                out.flush();
-            }
-
-            return temporaryPath;
-
-        } catch (IOException e) {
-            throw new ApplicationException(e);
-        }
+        CommonsUtils.copyInputStreamToFile(openStream, temporaryPath);
+        return temporaryPath;
     }
 
     @Override
     public String toString() {
         return String.format("%s - %s", getShortIdString(), relativePathString);
-    }
-
-    public String getShortIdString() {
-        return objectId.name().substring(0, 8);
     }
 }

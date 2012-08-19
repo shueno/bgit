@@ -4,7 +4,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.Thread.UncaughtExceptionHandler;
 
-import javax.swing.JOptionPane;
+import bgit.view.MessageDialog;
 
 public class MainExceptionHandler implements UncaughtExceptionHandler {
 
@@ -24,6 +24,7 @@ public class MainExceptionHandler implements UncaughtExceptionHandler {
             printWriter.flush();
         }
 
-        JOptionPane.showMessageDialog(null, stringWriter.toString());
+        MessageDialog messageDialog = new MessageDialog(stringWriter.toString());
+        messageDialog.setVisible(true);
     }
 }

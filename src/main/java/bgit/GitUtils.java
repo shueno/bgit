@@ -30,10 +30,13 @@ import org.eclipse.jgit.lib.IndexDiff;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectLoader;
 import org.eclipse.jgit.lib.ObjectReader;
+import org.eclipse.jgit.lib.ObjectStream;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevObject;
+import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.transport.PushResult;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.eclipse.jgit.treewalk.WorkingTreeIterator;
@@ -282,6 +285,36 @@ public class GitUtils {
             return tagCommand.call();
 
         } catch (GitAPIException e) {
+            throw new ApplicationException(e);
+        }
+    }
+
+    public static void parseHeaders(RevWalk revWalk, RevObject revObject) {
+
+        try {
+            revWalk.parseHeaders(revObject);
+
+        } catch (IOException e) {
+            throw new ApplicationException(e);
+        }
+    }
+
+    public static RevObject parseAny(RevWalk revWalk, ObjectId id) {
+
+        try {
+            return revWalk.parseAny(id);
+
+        } catch (IOException e) {
+            throw new ApplicationException(e);
+        }
+    }
+
+    public static ObjectStream openStream(ObjectLoader objectLoader) {
+
+        try {
+            return objectLoader.openStream();
+
+        } catch (IOException e) {
             throw new ApplicationException(e);
         }
     }

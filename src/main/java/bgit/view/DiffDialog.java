@@ -259,13 +259,13 @@ public class DiffDialog extends AbstractDialog {
     // TODO Check if the file is /dev/null
     private void handleOpenOldGitFileActionPerformed() {
         Desktop desktop = Desktop.getDesktop();
-        JdkUtils.open(desktop, oldGitFile.getTemporaryPath());
+        JdkUtils.open(desktop, oldGitFile.createTemporaryFile());
     }
 
     // TODO When the file is in working tree, cannot open by the objectId.
     // TODO Check if the file is /dev/null
     private void handleOpenNewGitFileActionPerformed() {
         Desktop desktop = Desktop.getDesktop();
-        JdkUtils.open(desktop, newGitFile.getTemporaryPath());
+        JdkUtils.open(desktop, newGitFile.createTemporaryFile());
     }
 }

@@ -249,8 +249,22 @@ public class CommitEditorDialog extends AbstractDialog {
 
     private void handleWindowOpened() {
         GitConfig gitConfig = project.findGitConfig();
-        authorTextField.setText(String.format("%s <%s>",
-                gitConfig.getUserName(), gitConfig.getUserEmail()));
+        StringBuilder sb = new StringBuilder();
+        String userName = gitConfig.getUserName();
+
+        if (!(userName == null || userName.isEmpty())) {
+            sb.append(userName);
+        }
+
+        String userEmail = gitConfig.getUserEmail();
+
+        if (!(userEmail == null || userEmail.isEmpty())) {
+            sb.append(" <");
+            sb.append(userEmail);
+            sb.append(">");
+        }
+
+        authorTextField.setText(sb.toString());
         String projectPathString = statusResult.getProjectPath().toString();
 
         for (Map.Entry<String, EnumSet<WorkNodeStatus>> entry : statusResult

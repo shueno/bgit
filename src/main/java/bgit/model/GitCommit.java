@@ -8,7 +8,10 @@ import org.eclipse.jgit.api.DiffCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevTree;
+import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.treewalk.AbstractTreeIterator;
 import org.eclipse.jgit.treewalk.EmptyTreeIterator;
 
@@ -25,11 +28,20 @@ public class GitCommit {
         this.revCommit = revCommit;
     }
 
+    public GitFolder findRootGitFolder() {
+        RevTree revTree = revCommit.getTree();
+        return new GitFolder(project, revTree, "");
+    }
+
     public List<GitCommit> findParentGitCommits() {
+        Repository repository = project.getGit().getRepository();
+        RevWalk revWalk = new RevWalk(repository);
         List<GitCommit> gitCommits = new ArrayList<GitCommit>();
 
         for (int i = 0; i < revCommit.getParentCount(); i++) {
-            GitCommit gitCommit = new GitCommit(project, revCommit.getParent(i));
+            RevCommit parentRevCommit = revCommit.getParent(i);
+            GitUtils.parseHeaders(revWalk, parentRevCommit);
+            GitCommit gitCommit = new GitCommit(project, parentRevCommit);
             gitCommits.add(gitCommit);
         }
 
@@ -71,7 +83,6 @@ public class GitCommit {
     }
 
     public String getShortIdString() {
-        // TODO Review whether 8 chars is enough
         return revCommit.getName().substring(0, 8);
     }
 

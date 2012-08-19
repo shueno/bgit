@@ -112,4 +112,14 @@ public class JdkUtils {
             throw new ApplicationException(e);
         }
     }
+
+    public static File createTempFile(String prefix, String suffix) {
+
+        try {
+            return File.createTempFile(prefix, suffix);
+
+        } catch (IOException e) {
+            throw new ApplicationException(e);
+        }
+    }
 }

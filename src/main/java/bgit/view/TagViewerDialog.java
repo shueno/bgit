@@ -18,12 +18,15 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
+import bgit.model.GitCommit;
 import bgit.model.GitTag;
 
 @SuppressWarnings("serial")
 public class TagViewerDialog extends AbstractDialog {
 
     private final GitTag gitTag;
+
+    private GitCommit gitCommit;
 
     private final JTextField tagNameTextField;
 
@@ -33,11 +36,13 @@ public class TagViewerDialog extends AbstractDialog {
 
     private final JTextArea messageTextArea;
 
+    private final JTextField commitTextField;
+
     public TagViewerDialog(GitTag gitTag) {
         this.gitTag = gitTag;
 
         setTitle("Tag Viewer");
-        setSize(new Dimension(500, 300));
+        setSize(new Dimension(600, 400));
         setLocationRelativeTo(null);
         addWindowListener(new WindowAdapter() {
             @Override
@@ -56,15 +61,25 @@ public class TagViewerDialog extends AbstractDialog {
                 fireWindowClosing();
             }
         });
+
+        JButton treeButton = new JButton("Tree");
+        treeButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                handleTreeActionPerformed();
+            }
+        });
+        footerPanel.add(treeButton);
         footerPanel.add(closeButton);
 
         JPanel tagPanel = new JPanel();
         getContentPane().add(tagPanel, BorderLayout.CENTER);
         GridBagLayout gbl_tagPanel = new GridBagLayout();
-        gbl_tagPanel.columnWidths = new int[] { 0, 0, 0 };
-        gbl_tagPanel.rowHeights = new int[] { 0, 0, 0, 0, 0 };
-        gbl_tagPanel.columnWeights = new double[] { 0.0, 1.0, Double.MIN_VALUE };
-        gbl_tagPanel.rowWeights = new double[] { 0.0, 0.0, 0.0, 1.0,
+        gbl_tagPanel.columnWidths = new int[] { 0, 0, 0, 0 };
+        gbl_tagPanel.rowHeights = new int[] { 0, 0, 0, 0, 0, 0 };
+        gbl_tagPanel.columnWeights = new double[] { 0.0, 1.0, 0.0,
+                Double.MIN_VALUE };
+        gbl_tagPanel.rowWeights = new double[] { 0.0, 0.0, 0.0, 1.0, 0.0,
                 Double.MIN_VALUE };
         tagPanel.setLayout(gbl_tagPanel);
 
@@ -79,6 +94,7 @@ public class TagViewerDialog extends AbstractDialog {
         tagNameTextField = new JTextField();
         tagNameTextField.setEditable(false);
         GridBagConstraints gbc_tagNameTextField = new GridBagConstraints();
+        gbc_tagNameTextField.gridwidth = 2;
         gbc_tagNameTextField.insets = new Insets(0, 0, 5, 0);
         gbc_tagNameTextField.fill = GridBagConstraints.HORIZONTAL;
         gbc_tagNameTextField.gridx = 1;
@@ -97,6 +113,7 @@ public class TagViewerDialog extends AbstractDialog {
         taggerTextField = new JTextField();
         taggerTextField.setEditable(false);
         GridBagConstraints gbc_taggerTextField = new GridBagConstraints();
+        gbc_taggerTextField.gridwidth = 2;
         gbc_taggerTextField.insets = new Insets(0, 0, 5, 0);
         gbc_taggerTextField.fill = GridBagConstraints.HORIZONTAL;
         gbc_taggerTextField.gridx = 1;
@@ -115,6 +132,7 @@ public class TagViewerDialog extends AbstractDialog {
         dateTextField = new JTextField();
         dateTextField.setEditable(false);
         GridBagConstraints gbc_dateTextField = new GridBagConstraints();
+        gbc_dateTextField.gridwidth = 2;
         gbc_dateTextField.insets = new Insets(0, 0, 5, 0);
         gbc_dateTextField.fill = GridBagConstraints.HORIZONTAL;
         gbc_dateTextField.gridx = 1;
@@ -125,13 +143,15 @@ public class TagViewerDialog extends AbstractDialog {
         JLabel messageLabel = new JLabel("Message");
         GridBagConstraints gbc_messageLabel = new GridBagConstraints();
         gbc_messageLabel.anchor = GridBagConstraints.EAST;
-        gbc_messageLabel.insets = new Insets(0, 0, 0, 5);
+        gbc_messageLabel.insets = new Insets(0, 0, 5, 5);
         gbc_messageLabel.gridx = 0;
         gbc_messageLabel.gridy = 3;
         tagPanel.add(messageLabel, gbc_messageLabel);
 
         JScrollPane scrollPane = new JScrollPane();
         GridBagConstraints gbc_scrollPane = new GridBagConstraints();
+        gbc_scrollPane.gridwidth = 2;
+        gbc_scrollPane.insets = new Insets(0, 0, 5, 0);
         gbc_scrollPane.fill = GridBagConstraints.BOTH;
         gbc_scrollPane.gridx = 1;
         gbc_scrollPane.gridy = 3;
@@ -140,6 +160,36 @@ public class TagViewerDialog extends AbstractDialog {
         messageTextArea = new JTextArea();
         messageTextArea.setEditable(false);
         scrollPane.setViewportView(messageTextArea);
+
+        JLabel lblCommit = new JLabel("Commit");
+        GridBagConstraints gbc_lblCommit = new GridBagConstraints();
+        gbc_lblCommit.anchor = GridBagConstraints.EAST;
+        gbc_lblCommit.insets = new Insets(0, 0, 0, 5);
+        gbc_lblCommit.gridx = 0;
+        gbc_lblCommit.gridy = 4;
+        tagPanel.add(lblCommit, gbc_lblCommit);
+
+        commitTextField = new JTextField();
+        commitTextField.setEditable(false);
+        GridBagConstraints gbc_commitTextField = new GridBagConstraints();
+        gbc_commitTextField.insets = new Insets(0, 0, 0, 5);
+        gbc_commitTextField.fill = GridBagConstraints.HORIZONTAL;
+        gbc_commitTextField.gridx = 1;
+        gbc_commitTextField.gridy = 4;
+        tagPanel.add(commitTextField, gbc_commitTextField);
+        commitTextField.setColumns(10);
+
+        JButton viewButton = new JButton("View");
+        viewButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                handleViewActionPerformed();
+            }
+        });
+        GridBagConstraints gbc_viewButton = new GridBagConstraints();
+        gbc_viewButton.gridx = 2;
+        gbc_viewButton.gridy = 4;
+        tagPanel.add(viewButton, gbc_viewButton);
     }
 
     private void handleWindowOpened() {
@@ -161,5 +211,33 @@ public class TagViewerDialog extends AbstractDialog {
         if (message != null) {
             messageTextArea.setText(message);
         }
+
+        gitCommit = gitTag.findGitCommit();
+
+        if (gitCommit != null) {
+            commitTextField.setText(gitCommit.getOneline());
+        }
+    }
+
+    private void handleViewActionPerformed() {
+
+        if (gitCommit == null) {
+            return;
+        }
+
+        CommitViewerDialog commitViewerDialog = new CommitViewerDialog(
+                gitCommit);
+        commitViewerDialog.setVisible(true);
+    }
+
+    private void handleTreeActionPerformed() {
+
+        if (gitCommit == null) {
+            return;
+        }
+
+        RevisionTreeDialog revisionTreeDialog = new RevisionTreeDialog(
+                gitCommit);
+        revisionTreeDialog.setVisible(true);
     }
 }

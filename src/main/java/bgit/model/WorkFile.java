@@ -30,6 +30,11 @@ public class WorkFile extends WorkNode {
 
     @Override
     public String getStatus() {
+
+        if (statusSet.isEmpty()) {
+            return "";
+        }
+
         return statusSet.toString();
     }
 }

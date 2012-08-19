@@ -87,6 +87,15 @@ public class CommitViewerDialog extends AbstractDialog {
                 fireWindowClosing();
             }
         });
+
+        JButton treeButton = new JButton("Tree");
+        treeButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                handleTreeActionPerformed();
+            }
+        });
+        footerPanel.add(treeButton);
         footerPanel.add(closeButton);
 
         JSplitPane splitPane = new JSplitPane();
@@ -303,6 +312,12 @@ public class CommitViewerDialog extends AbstractDialog {
         }
 
         updateDiffTable();
+    }
+
+    private void handleTreeActionPerformed() {
+        RevisionTreeDialog revisionTreeDialog = new RevisionTreeDialog(
+                gitCommit);
+        revisionTreeDialog.setVisible(true);
     }
 
     private void handleParentComboBoxActionPerformed() {

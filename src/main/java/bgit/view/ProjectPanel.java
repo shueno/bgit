@@ -1406,6 +1406,7 @@ public class ProjectPanel extends JPanel {
             putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0));
         }
 
+        // TODO Rename the folder in WorkFolderTree
         @Override
         public void actionPerformed(ActionEvent e) {
             WorkNode workNode = getCurrentWorkNode();
@@ -1450,6 +1451,7 @@ public class ProjectPanel extends JPanel {
                     KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0));
         }
 
+        // TODO Delete the folder in WorkFolderTree
         @Override
         public void actionPerformed(ActionEvent e) {
             List<WorkNode> workNodes = new ArrayList<WorkNode>();

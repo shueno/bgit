@@ -66,7 +66,7 @@ public class Project implements Comparable<Project> {
 
     private final Git git;
 
-    public final Repository repository;
+    private final Repository repository;
 
     private StatusResult statusResult;
 
@@ -85,7 +85,7 @@ public class Project implements Comparable<Project> {
         tagCommand.setName(tagName);
         tagCommand.setMessage(message);
         Ref ref = GitUtils.call(tagCommand);
-        return new GitTag(git, ref);
+        return new GitTag(this, ref);
     }
 
     public Iterable<GitTag> findGitTags() {
@@ -94,7 +94,7 @@ public class Project implements Comparable<Project> {
         List<GitTag> gitTags = new ArrayList<GitTag>();
 
         for (Ref ref : refs) {
-            GitTag gitTag = new GitTag(git, ref);
+            GitTag gitTag = new GitTag(this, ref);
             gitTags.add(gitTag);
         }
 
@@ -187,7 +187,8 @@ public class Project implements Comparable<Project> {
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         DiffCommand diffCommand = git.diff();
-        diffCommand.setPathFilter(PathFilter.create(relativePathString));
+        diffCommand.setPathFilter(PathFilter
+                .create(replaceSeparators(relativePathString)));
         diffCommand.setOldTree(oldTreeIterator);
         diffCommand.setNewTree(newTreeIterator);
         diffCommand.setOutputStream(outputStream);
@@ -203,7 +204,7 @@ public class Project implements Comparable<Project> {
 
     public GitCommit findNewestGitCommit(String relativePathString) {
         LogCommand logCommand = git.log();
-        logCommand.addPath(relativePathString);
+        logCommand.addPath(replaceSeparators(relativePathString));
         Iterable<RevCommit> revCommits = GitUtils.call(logCommand);
         Iterator<RevCommit> it = revCommits.iterator();
 
@@ -247,7 +248,7 @@ public class Project implements Comparable<Project> {
         AddCommand addCommand = git.add();
 
         for (String relativePathString : relativePathStrings) {
-            addCommand.addFilepattern(relativePathString);
+            addCommand.addFilepattern(replaceSeparators(relativePathString));
         }
 
         GitUtils.call(addCommand);
@@ -256,7 +257,7 @@ public class Project implements Comparable<Project> {
         commitCommand.setMessage(message);
 
         for (String relativePathString : relativePathStrings) {
-            commitCommand.setOnly(relativePathString);
+            commitCommand.setOnly(replaceSeparators(relativePathString));
         }
 
         GitUtils.call(commitCommand);
@@ -285,11 +286,21 @@ public class Project implements Comparable<Project> {
         if (workFilePath != null) {
             String relativePathString = convertToRelativePathString(
                     absolutePath.toString(), workFilePath.toString());
-            indexDiff.setFilter(PathFilter.create(relativePathString));
+            indexDiff.setFilter(PathFilter
+                    .create(replaceSeparators(relativePathString)));
         }
 
         GitUtils.diff(indexDiff);
         return new StatusResult(absolutePath, indexDiff);
+    }
+
+    private static String replaceSeparators(String relativePathString) {
+
+        if (File.separator.equals("/")) {
+            return relativePathString;
+        }
+
+        return relativePathString.replace(File.separator, "/");
     }
 
     public void startMonitor() {
