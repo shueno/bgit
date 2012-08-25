@@ -17,7 +17,10 @@ public class Main implements Runnable {
 
     @Override
     public void run() {
-        Thread.setDefaultUncaughtExceptionHandler(new MainExceptionHandler());
+        Preferences preferences = Preferences.userNodeForPackage(Main.class);
+        Application application = new Application(preferences);
+        Thread.setDefaultUncaughtExceptionHandler(new MainExceptionHandler(
+                application));
         System.setProperty("sun.awt.exception.handler",
                 MainExceptionHandler.class.getName());
 
@@ -32,8 +35,6 @@ public class Main implements Runnable {
             }
         }
 
-        Preferences preferences = Preferences.userNodeForPackage(Main.class);
-        Application application = new Application(preferences);
         MainFrame mainFrame = new MainFrame(application);
         mainFrame.setVisible(true);
     }

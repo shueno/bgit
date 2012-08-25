@@ -46,4 +46,8 @@ public class GitFile extends GitNode {
     public String toString() {
         return String.format("%s - %s", getShortIdString(), relativePathString);
     }
+
+    public boolean isTracked() {
+        return project.getGit().getRepository().hasObject(objectId);
+    }
 }

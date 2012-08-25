@@ -21,11 +21,10 @@ public abstract class WorkNode {
         this.ignored = ignored;
     }
 
-    public abstract void delete();
+    public abstract boolean delete();
 
-    // TODO Check return value of renameTo
-    public void rename(String name) {
-        absolutePath.renameTo(new File(absolutePath.getParent(), name));
+    public boolean rename(String name) {
+        return absolutePath.renameTo(new File(absolutePath.getParent(), name));
     }
 
     public void ignore() {

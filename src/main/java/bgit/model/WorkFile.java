@@ -13,10 +13,9 @@ public class WorkFile extends WorkNode {
         this.statusSet = statusSet;
     }
 
-    // TODO Check return value of delete
     @Override
-    public void delete() {
-        absolutePath.delete();
+    public boolean delete() {
+        return absolutePath.delete();
     }
 
     public EnumSet<WorkNodeStatus> getStatusSet() {

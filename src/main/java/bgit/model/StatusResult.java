@@ -75,6 +75,17 @@ public class StatusResult {
         return statusSetMap.remove(workFilePathString);
     }
 
+    public boolean isUntracked(File workFilePath) {
+        EnumSet<WorkNodeStatus> statusSet = statusSetMap.get(workFilePath
+                .toString());
+
+        if (statusSet == null) {
+            return false;
+        }
+
+        return statusSet.contains(WorkNodeStatus.UNTRACKED);
+    }
+
     public boolean isInIgnored(File workNodePath) {
         Boolean ignored = ignoredMap.get(workNodePath.toString());
 

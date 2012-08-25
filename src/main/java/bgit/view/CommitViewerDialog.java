@@ -34,6 +34,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
+import bgit.model.Application;
 import bgit.model.GitCommit;
 import bgit.model.GitDiffEntry;
 
@@ -64,12 +65,14 @@ public class CommitViewerDialog extends AbstractDialog {
 
     private final Action diffAction = new DiffAction();
 
-    public CommitViewerDialog(GitCommit gitCommit) {
+    public CommitViewerDialog(Application application, GitCommit gitCommit) {
+        super(application);
         this.gitCommit = gitCommit;
 
         setTitle("Commit Viewer");
         setSize(new Dimension(700, 500));
-        setLocationRelativeTo(null);
+        bindWindowSettings();
+
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowOpened(WindowEvent e) {
@@ -316,7 +319,7 @@ public class CommitViewerDialog extends AbstractDialog {
 
     private void handleTreeActionPerformed() {
         RevisionTreeDialog revisionTreeDialog = new RevisionTreeDialog(
-                gitCommit);
+                application, gitCommit);
         revisionTreeDialog.setVisible(true);
     }
 
@@ -352,8 +355,9 @@ public class CommitViewerDialog extends AbstractDialog {
         }
 
         GitCommit parentGitCommit = getCurrentParentGitCommit();
-        DiffDialog diffDialog = new DiffDialog(gitCommit.getProject(),
-                gitDiffEntry.getDisplayPathString(), parentGitCommit, gitCommit);
+        DiffDialog diffDialog = new DiffDialog(application,
+                gitCommit.getProject(), gitDiffEntry.getDisplayPathString(),
+                parentGitCommit, gitCommit);
         diffDialog.setVisible(true);
     }
 

@@ -15,6 +15,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+import bgit.model.Application;
 import bgit.model.GitConfig;
 
 @SuppressWarnings("serial")
@@ -26,12 +27,14 @@ public class UserSettingsDialog extends AbstractDialog {
 
     private final JTextField emailTextField;
 
-    public UserSettingsDialog(GitConfig gitConfig) {
+    public UserSettingsDialog(Application application, GitConfig gitConfig) {
+        super(application);
         this.gitConfig = gitConfig;
 
         setTitle("User Settings");
         setSize(new Dimension(500, 140));
-        setLocationRelativeTo(null);
+        bindWindowSettings();
+
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowOpened(WindowEvent e) {

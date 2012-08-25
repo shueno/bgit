@@ -18,6 +18,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
+import bgit.model.Application;
 import bgit.model.GitCommit;
 import bgit.model.GitTag;
 
@@ -38,12 +39,14 @@ public class TagViewerDialog extends AbstractDialog {
 
     private final JTextField commitTextField;
 
-    public TagViewerDialog(GitTag gitTag) {
+    public TagViewerDialog(Application application, GitTag gitTag) {
+        super(application);
         this.gitTag = gitTag;
 
         setTitle("Tag Viewer");
         setSize(new Dimension(600, 400));
-        setLocationRelativeTo(null);
+        bindWindowSettings();
+
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowOpened(WindowEvent e) {
@@ -226,7 +229,7 @@ public class TagViewerDialog extends AbstractDialog {
         }
 
         CommitViewerDialog commitViewerDialog = new CommitViewerDialog(
-                gitCommit);
+                application, gitCommit);
         commitViewerDialog.setVisible(true);
     }
 
@@ -237,7 +240,7 @@ public class TagViewerDialog extends AbstractDialog {
         }
 
         RevisionTreeDialog revisionTreeDialog = new RevisionTreeDialog(
-                gitCommit);
+                application, gitCommit);
         revisionTreeDialog.setVisible(true);
     }
 }

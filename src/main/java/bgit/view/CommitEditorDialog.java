@@ -37,6 +37,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
 
+import bgit.model.Application;
 import bgit.model.GitCommit;
 import bgit.model.GitConfig;
 import bgit.model.Project;
@@ -62,13 +63,16 @@ public class CommitEditorDialog extends AbstractDialog {
 
     private final StatusTableModel statusTableModel;
 
-    public CommitEditorDialog(Project project, StatusResult statusResult) {
+    public CommitEditorDialog(Application application, Project project,
+            StatusResult statusResult) {
+        super(application);
         this.project = project;
         this.statusResult = statusResult;
 
         setTitle("Commit Editor");
         setSize(new Dimension(700, 500));
-        setLocationRelativeTo(null);
+        bindWindowSettings();
+
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowOpened(WindowEvent e) {
@@ -307,8 +311,8 @@ public class CommitEditorDialog extends AbstractDialog {
 
         GitCommit newestGitCommit = project
                 .findNewestGitCommit(relativePathString);
-        DiffDialog diffDialog = new DiffDialog(project, relativePathString,
-                newestGitCommit, null);
+        DiffDialog diffDialog = new DiffDialog(application, project,
+                relativePathString, newestGitCommit, null);
         diffDialog.setVisible(true);
     }
 

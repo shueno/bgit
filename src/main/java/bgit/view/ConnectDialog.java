@@ -36,13 +36,16 @@ public class ConnectDialog extends AbstractDialog {
 
     private final JTextField branchNameTextField;
 
-    public ConnectDialog(GitConfig gitConfig, String branchName) {
+    public ConnectDialog(Application application, GitConfig gitConfig,
+            String branchName) {
+        super(application);
         this.gitConfig = gitConfig;
         this.branchName = branchName;
 
         setTitle("Connect");
         setSize(new Dimension(500, 180));
-        setLocationRelativeTo(null);
+        bindWindowSettings();
+
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowOpened(WindowEvent e) {

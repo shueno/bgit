@@ -70,10 +70,12 @@ import org.apache.commons.logging.LogFactory;
 
 import bgit.ApplicationException;
 import bgit.JdkUtils;
+import bgit.model.Application;
 import bgit.model.GitCommit;
 import bgit.model.GitConfig;
 import bgit.model.GitPullResult;
 import bgit.model.GitPushResult;
+import bgit.model.GitRepositoryState;
 import bgit.model.Project;
 import bgit.model.StatusResult;
 import bgit.model.WorkFile;
@@ -85,6 +87,8 @@ import bgit.model.WorkNodeListener;
 public class ProjectPanel extends JPanel {
 
     private static final Log log = LogFactory.getLog(ProjectPanel.class);
+
+    private final Application application;
 
     private final Project project;
 
@@ -129,6 +133,8 @@ public class ProjectPanel extends JPanel {
 
     private final Action tagsAction = new TagsAction();
 
+    private final Action archiveAction = new ArchiveAction();
+
     private final Action renameAction = new RenameAction();
 
     private final Action deleteAction = new DeleteAction();
@@ -158,9 +164,11 @@ public class ProjectPanel extends JPanel {
     private final Set<Action> conditionalActions = new HashSet<Action>(
             Arrays.asList(newFolderAction, newFileAction, openAction,
                     parentAction, renameAction, deleteAction, diffAction,
-                    ignoreAction));
+                    ignoreAction, logAction, archiveAction, rollbackAction,
+                    discardLastCommitAction, pullAction, pushAction));
 
-    public ProjectPanel(Project project) {
+    public ProjectPanel(Application application, Project project) {
+        this.application = application;
         this.project = project;
         this.workNodeListener = new ProjectPanelWorkNodeListener();
 
@@ -201,9 +209,10 @@ public class ProjectPanel extends JPanel {
         projectMenu.add(statusAction);
         projectMenu.add(logAction);
         projectMenu.add(tagsAction);
+        projectMenu.add(archiveAction);
         projectMenu.addSeparator();
         projectMenu.add(new JMenuItem("Rename"));
-        projectMenu.add(new JMenuItem("Delete"));
+        projectMenu.add(new JMenuItem("Close"));
         projectMenu.addSeparator();
         projectMenu.add(commitAction);
         projectMenu.add(rollbackAction);
@@ -298,6 +307,7 @@ public class ProjectPanel extends JPanel {
         workFolderTreeInputMap.put(
                 KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "table");
         ActionMap workFolderTreeActionMap = workFolderTree.getActionMap();
+        workFolderTreeActionMap.put("startEditing", renameAction);
         workFolderTreeActionMap.put("table", new AbstractAction() {
 
             @Override
@@ -327,7 +337,6 @@ public class ProjectPanel extends JPanel {
                 Double.MIN_VALUE };
         workNodeHeaderPanel.setLayout(gbl_workNodeHeaderPanel);
 
-        // TODO Review to use "FileChooser.upFolderIcon" icon.
         JButton parentButton = new JButton(parentAction);
         GridBagConstraints gbc_parentButton = new GridBagConstraints();
         gbc_parentButton.insets = new Insets(0, 0, 0, 5);
@@ -438,8 +447,8 @@ public class ProjectPanel extends JPanel {
         }
 
         doRefresh();
+        workFolderTree.expandRow(0);
         workFolderTree.requestFocusInWindow();
-        updateActions();
         project.startMonitor();
         shown = true;
     }
@@ -480,6 +489,7 @@ public class ProjectPanel extends JPanel {
             footerTextField.setText(s);
             ViewHelper.setDefaultCursor(this);
             project.addWorkNodeListener(workNodeListener);
+            updateActions();
         }
     }
 
@@ -575,17 +585,20 @@ public class ProjectPanel extends JPanel {
         }
 
         if (jumpWorkNodePath != null) {
-            int modelRowIndex = workNodeTableModel
-                    .findModelRowIndex(jumpWorkNodePath);
-
-            if (modelRowIndex >= 0) {
-                int viewRowIndex = workNodeTable
-                        .convertRowIndexToView(modelRowIndex);
-                workNodeTable.changeSelection(viewRowIndex, 0, false, false);
-            }
-
+            selectWorkNodeTableRow(jumpWorkNodePath);
             jumpWorkNodePath = null;
         }
+    }
+
+    private void selectWorkNodeTableRow(File workNodePath) {
+        int modelRowIndex = workNodeTableModel.findModelRowIndex(workNodePath);
+
+        if (modelRowIndex < 0) {
+            return;
+        }
+
+        int viewRowIndex = workNodeTable.convertRowIndexToView(modelRowIndex);
+        workNodeTable.changeSelection(viewRowIndex, 0, false, false);
     }
 
     private void handleWorkNodeTableValueChanged() {
@@ -614,19 +627,40 @@ public class ProjectPanel extends JPanel {
 
     private void updateActions() {
         Set<Action> enabledActions = new HashSet<Action>();
+        GitCommit headGitCommit = project.findHeadGitCommit();
+
+        if (headGitCommit != null) {
+            enabledActions.add(logAction);
+            enabledActions.add(archiveAction);
+            enabledActions.add(rollbackAction);
+
+            if (project.isConnected()) {
+                enabledActions.add(pullAction);
+                enabledActions.add(pushAction);
+            }
+
+            if (!headGitCommit.findParentGitCommits().isEmpty()) {
+                enabledActions.add(discardLastCommitAction);
+            }
+        }
+
         WorkFolder currentWorkFolder = getCurrentWorkFolder();
 
         if (currentWorkFolder != null) {
             enabledActions.add(newFolderAction);
             enabledActions.add(newFileAction);
-            enabledActions.add(parentAction);
+
             WorkNode currentWorkNode = getCurrentWorkNode();
 
-            if (currentWorkNode != null) {
-                enabledActions.add(openAction);
+            if (!(currentWorkFolder.isRoot() && currentWorkNode == null)) {
+                enabledActions.add(parentAction);
                 enabledActions.add(renameAction);
                 enabledActions.add(deleteAction);
                 enabledActions.add(ignoreAction);
+            }
+
+            if (currentWorkNode != null) {
+                enabledActions.add(openAction);
 
                 if (currentWorkNode instanceof WorkFile) {
                     enabledActions.add(diffAction);
@@ -656,10 +690,20 @@ public class ProjectPanel extends JPanel {
         JdkUtils.open(desktop, currentWorkNode.getAbsolutePath());
     }
 
-    // TODO In same directory when another file is indicated, failed to select.
     private void jump(File workNodePath) {
-        jumpWorkNodePath = workNodePath;
-        selectWorkFolderTreeNode(workNodePath.getParentFile());
+        File parentWorkFolderPath = workNodePath.getParentFile();
+        WorkFolder currentWorkFolder = getCurrentWorkFolder();
+
+        if (currentWorkFolder != null
+                && currentWorkFolder.getAbsolutePath().equals(
+                        parentWorkFolderPath)) {
+            selectWorkNodeTableRow(workNodePath);
+
+        } else {
+            jumpWorkNodePath = workNodePath;
+            selectWorkFolderTreeNode(parentWorkFolderPath);
+        }
+
         workNodeTable.requestFocusInWindow();
     }
 
@@ -752,7 +796,6 @@ public class ProjectPanel extends JPanel {
             }
 
             if (moved) {
-                // TODO Check return value of renameTo
                 sourceNodePath.renameTo(destinationNodePath);
                 continue;
             }
@@ -867,7 +910,8 @@ public class ProjectPanel extends JPanel {
 
             parentTreeNode.add(treeNode);
             treeNodeMap.put(workFolder.getAbsolutePath().toString(), treeNode);
-            nodeStructureChanged(parentTreeNode);
+            nodesWereInserted(parentTreeNode,
+                    new int[] { parentTreeNode.getChildCount() - 1 });
         }
 
         public void removeWorkFolder(File absolutePath) {
@@ -1195,7 +1239,7 @@ public class ProjectPanel extends JPanel {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            StatusDialog statusDialog = new StatusDialog(project);
+            StatusDialog statusDialog = new StatusDialog(application, project);
             statusDialog.setVisible(true);
             File absolutePath = statusDialog.getAbsolutePath();
 
@@ -1263,9 +1307,31 @@ public class ProjectPanel extends JPanel {
             putValue(NAME, "Rollback");
         }
 
-        // TODO Check a altered file is exists.
         @Override
         public void actionPerformed(ActionEvent e) {
+            GitRepositoryState gitRepositoryState = project
+                    .findGitRepositoryState();
+
+            if (!gitRepositoryState.canRollback()) {
+                JOptionPane.showMessageDialog(null,
+                        "Repository state is invalid");
+                return;
+            }
+
+            GitCommit headGitCommit = project.findHeadGitCommit();
+
+            if (headGitCommit == null) {
+                JOptionPane.showMessageDialog(null, "No commit");
+                return;
+            }
+
+            StatusResult statusResult = project.status();
+
+            if (statusResult.isClean()) {
+                JOptionPane.showMessageDialog(null, "Not altered");
+                return;
+            }
+
             int option = JOptionPane.showConfirmDialog(null, "Rollback?",
                     "Confirmation", JOptionPane.YES_NO_OPTION);
 
@@ -1285,15 +1351,24 @@ public class ProjectPanel extends JPanel {
 
         @Override
         public void actionPerformed(ActionEvent e) {
+            GitRepositoryState gitRepositoryState = project
+                    .findGitRepositoryState();
+
+            if (!gitRepositoryState.canCommit()) {
+                JOptionPane.showMessageDialog(null,
+                        "Repository state is invalid");
+                return;
+            }
+
             StatusResult statusResult = project.status();
 
             if (statusResult.isClean()) {
-                JOptionPane.showMessageDialog(null, "Not found");
+                JOptionPane.showMessageDialog(null, "Not altered");
                 return;
             }
 
             CommitEditorDialog commitEditorDialog = new CommitEditorDialog(
-                    project, statusResult);
+                    application, project, statusResult);
             commitEditorDialog.setVisible(true);
 
             if (!commitEditorDialog.isSucceeded()) {
@@ -1310,14 +1385,29 @@ public class ProjectPanel extends JPanel {
             putValue(NAME, "Ignore");
         }
 
-        // TODO Check file is not managed.
         @Override
         public void actionPerformed(ActionEvent e) {
             WorkNode workNode = getCurrentWorkNode();
 
             if (workNode == null) {
-                JOptionPane.showMessageDialog(null, "Not found");
-                return;
+                WorkFolder workFolder = getCurrentWorkFolder();
+
+                if (workFolder == null || workFolder.isRoot()) {
+                    JOptionPane.showMessageDialog(null, "Not found");
+                    return;
+                }
+
+                workNode = workFolder;
+            }
+
+            if (workNode instanceof WorkFile) {
+                File workFilePath = workNode.getAbsolutePath();
+                StatusResult statusResult = project.status(workFilePath);
+
+                if (!statusResult.isUntracked(workFilePath)) {
+                    JOptionPane.showMessageDialog(null, "Not untracked");
+                    return;
+                }
             }
 
             workNode.ignore();
@@ -1406,14 +1496,19 @@ public class ProjectPanel extends JPanel {
             putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0));
         }
 
-        // TODO Rename the folder in WorkFolderTree
         @Override
         public void actionPerformed(ActionEvent e) {
             WorkNode workNode = getCurrentWorkNode();
 
             if (workNode == null) {
-                JOptionPane.showMessageDialog(null, "Not found");
-                return;
+                WorkFolder workFolder = getCurrentWorkFolder();
+
+                if (workFolder == null || workFolder.isRoot()) {
+                    JOptionPane.showMessageDialog(null, "Not found");
+                    return;
+                }
+
+                workNode = workFolder;
             }
 
             String title = workNode instanceof WorkFolder ? "Folder name"
@@ -1438,7 +1533,6 @@ public class ProjectPanel extends JPanel {
                         String.format("%s is invalid.", title));
             }
 
-            // TODO Why icon is disapeared just after renamed.
             workNode.rename(name);
         }
     }
@@ -1451,7 +1545,6 @@ public class ProjectPanel extends JPanel {
                     KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0));
         }
 
-        // TODO Delete the folder in WorkFolderTree
         @Override
         public void actionPerformed(ActionEvent e) {
             List<WorkNode> workNodes = new ArrayList<WorkNode>();
@@ -1462,6 +1555,14 @@ public class ProjectPanel extends JPanel {
                 WorkNode workNode = workNodeTableModel
                         .getWorkNode(modelRowIndex);
                 workNodes.add(workNode);
+            }
+
+            if (workNodes.isEmpty()) {
+                WorkFolder workFolder = getCurrentWorkFolder();
+
+                if (workFolder != null && !workFolder.isRoot()) {
+                    workNodes.add(workFolder);
+                }
             }
 
             if (workNodes.isEmpty()) {
@@ -1505,8 +1606,15 @@ public class ProjectPanel extends JPanel {
 
         @Override
         public void actionPerformed(ActionEvent e) {
+            GitCommit headGitCommit = project.findHeadGitCommit();
+
+            if (headGitCommit == null) {
+                JOptionPane.showMessageDialog(null, "No commit");
+                return;
+            }
+
             Iterable<GitCommit> gitCommits = project.log();
-            LogDialog logDialog = new LogDialog(gitCommits);
+            LogDialog logDialog = new LogDialog(application, gitCommits);
             logDialog.setVisible(true);
         }
     }
@@ -1519,8 +1627,27 @@ public class ProjectPanel extends JPanel {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            TagsDialog tagsDialog = new TagsDialog(project);
+            TagsDialog tagsDialog = new TagsDialog(application, project);
             tagsDialog.setVisible(true);
+        }
+    }
+
+    private class ArchiveAction extends AbstractAction {
+
+        public ArchiveAction() {
+            putValue(NAME, "Archive");
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            GitCommit headGitCommit = project.findHeadGitCommit();
+
+            if (headGitCommit == null) {
+                JOptionPane.showMessageDialog(null, "No commit");
+                return;
+            }
+
+            ViewHelper.commandArchive(headGitCommit);
         }
     }
 
@@ -1542,8 +1669,8 @@ public class ProjectPanel extends JPanel {
             String relativePathString = workNode.getRelativePathString();
             GitCommit newestGitCommit = project
                     .findNewestGitCommit(relativePathString);
-            DiffDialog diffDialog = new DiffDialog(project, relativePathString,
-                    newestGitCommit, null);
+            DiffDialog diffDialog = new DiffDialog(application, project,
+                    relativePathString, newestGitCommit, null);
             diffDialog.setVisible(true);
         }
     }
@@ -1556,6 +1683,23 @@ public class ProjectPanel extends JPanel {
 
         @Override
         public void actionPerformed(ActionEvent e) {
+            GitRepositoryState gitRepositoryState = project
+                    .findGitRepositoryState();
+
+            if (!gitRepositoryState.canDiscardLastCommit()) {
+                JOptionPane.showMessageDialog(null,
+                        "Repository state is invalid");
+                return;
+            }
+
+            GitCommit headGitCommit = project.findHeadGitCommit();
+
+            if (headGitCommit == null
+                    || headGitCommit.findParentGitCommits().isEmpty()) {
+                JOptionPane.showMessageDialog(null, "No parent commit");
+                return;
+            }
+
             int option = JOptionPane.showConfirmDialog(null,
                     "Discard last commit?", "Confirmation",
                     JOptionPane.YES_NO_OPTION);
@@ -1575,10 +1719,9 @@ public class ProjectPanel extends JPanel {
             putValue(NAME, "Share");
         }
 
-        // TODO Check project status
         @Override
         public void actionPerformed(ActionEvent e) {
-            ShareDialog shareDialog = new ShareDialog(project);
+            ShareDialog shareDialog = new ShareDialog(application, project);
             shareDialog.setVisible(true);
 
             if (!shareDialog.isSucceeded()) {
@@ -1586,6 +1729,7 @@ public class ProjectPanel extends JPanel {
             }
 
             JOptionPane.showMessageDialog(null, "Shared");
+            updateActions();
         }
     }
 
@@ -1599,8 +1743,8 @@ public class ProjectPanel extends JPanel {
         public void actionPerformed(ActionEvent e) {
             GitConfig gitConfig = project.findGitConfig();
             String branchName = project.getCurrentBranchName();
-            ConnectDialog connectDialog = new ConnectDialog(gitConfig,
-                    branchName);
+            ConnectDialog connectDialog = new ConnectDialog(application,
+                    gitConfig, branchName);
             connectDialog.setVisible(true);
 
             if (!connectDialog.isSucceeded()) {
@@ -1608,6 +1752,7 @@ public class ProjectPanel extends JPanel {
             }
 
             JOptionPane.showMessageDialog(null, "Connected");
+            updateActions();
         }
     }
 
@@ -1620,7 +1765,7 @@ public class ProjectPanel extends JPanel {
         @Override
         public void actionPerformed(ActionEvent e) {
             GitConfig gitConfig = project.findGitConfig();
-            ConfigDialog configDialog = new ConfigDialog(gitConfig);
+            ConfigDialog configDialog = new ConfigDialog(application, gitConfig);
             configDialog.setVisible(true);
         }
     }
@@ -1646,6 +1791,7 @@ public class ProjectPanel extends JPanel {
             gitConfig.unsetConnection(remoteName, branchName);
             gitConfig.save();
             JOptionPane.showMessageDialog(null, "Disconnected");
+            updateActions();
         }
     }
 
@@ -1655,9 +1801,22 @@ public class ProjectPanel extends JPanel {
             putValue(NAME, "Pull from");
         }
 
-        // TODO Check preconditions of the project
         @Override
         public void actionPerformed(ActionEvent e) {
+            GitRepositoryState gitRepositoryState = project
+                    .findGitRepositoryState();
+
+            if (!gitRepositoryState.canPull()) {
+                JOptionPane.showMessageDialog(null,
+                        "Repository state is invalid");
+                return;
+            }
+
+            if (!project.isConnected()) {
+                JOptionPane.showMessageDialog(null, "Not connected");
+                return;
+            }
+
             int option = JOptionPane.showConfirmDialog(null, "Pull?",
                     "Confirmation", JOptionPane.YES_NO_OPTION);
 
@@ -1684,6 +1843,12 @@ public class ProjectPanel extends JPanel {
 
         @Override
         public void actionPerformed(ActionEvent e) {
+
+            if (!project.isConnected()) {
+                JOptionPane.showMessageDialog(null, "Not connected");
+                return;
+            }
+
             int option = JOptionPane.showConfirmDialog(null, "Push?",
                     "Confirmation", JOptionPane.YES_NO_OPTION);
 

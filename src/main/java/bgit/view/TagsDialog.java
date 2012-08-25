@@ -31,6 +31,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
+import bgit.model.Application;
 import bgit.model.GitPushResult;
 import bgit.model.GitTag;
 import bgit.model.Project;
@@ -48,12 +49,14 @@ public class TagsDialog extends AbstractDialog {
 
     private final Action viewAction = new ViewAction();
 
-    public TagsDialog(Project project) {
+    public TagsDialog(Application application, Project project) {
+        super(application);
         this.project = project;
 
         setTitle("Tags");
         setSize(new Dimension(800, 400));
-        setLocationRelativeTo(null);
+        bindWindowSettings();
+
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowOpened(WindowEvent e) {
@@ -210,7 +213,8 @@ public class TagsDialog extends AbstractDialog {
     }
 
     private void handleNewTagActionPerformed() {
-        TagEditorDialog tagEditorDialog = new TagEditorDialog(project);
+        TagEditorDialog tagEditorDialog = new TagEditorDialog(application,
+                project);
         tagEditorDialog.setVisible(true);
         GitTag gitTag = tagEditorDialog.getGitTag();
 
@@ -230,7 +234,8 @@ public class TagsDialog extends AbstractDialog {
 
         int modelRowIndex = tagTable.convertRowIndexToModel(viewRowIndex);
         GitTag gitTag = tagTableModel.findGitTag(modelRowIndex);
-        TagViewerDialog tagViewerDialog = new TagViewerDialog(gitTag);
+        TagViewerDialog tagViewerDialog = new TagViewerDialog(application,
+                gitTag);
         tagViewerDialog.setVisible(true);
     }
 

@@ -29,6 +29,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
+import bgit.model.Application;
 import bgit.model.GitCommit;
 
 //TODO Show ahead and behind information
@@ -45,12 +46,14 @@ public class LogDialog extends AbstractDialog {
 
     private final Action viewAction = new ViewAction();
 
-    public LogDialog(Iterable<GitCommit> gitCommits) {
+    public LogDialog(Application application, Iterable<GitCommit> gitCommits) {
+        super(application);
         this.gitCommits = gitCommits;
 
         setTitle("Log");
         setSize(new Dimension(800, 400));
-        setLocationRelativeTo(null);
+        bindWindowSettings();
+
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowOpened(WindowEvent e) {
@@ -172,7 +175,7 @@ public class LogDialog extends AbstractDialog {
         }
 
         CommitViewerDialog commitViewerDialog = new CommitViewerDialog(
-                gitCommit);
+                application, gitCommit);
         commitViewerDialog.setVisible(true);
     }
 

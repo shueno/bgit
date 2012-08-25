@@ -10,13 +10,17 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
+import bgit.model.Application;
+
 @SuppressWarnings("serial")
 public class MessageDialog extends AbstractDialog {
 
-    public MessageDialog(String message) {
+    public MessageDialog(Application application, String message) {
+        super(application);
+
         setTitle("Message");
         setSize(new Dimension(600, 400));
-        setLocationRelativeTo(null);
+        bindWindowSettings();
 
         JPanel footerPanel = new JPanel();
         getContentPane().add(footerPanel, BorderLayout.SOUTH);

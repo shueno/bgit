@@ -19,10 +19,17 @@ import bgit.JdkUtils;
 
 public class Application {
 
+    private final Preferences preferences;
+
     private final Preferences projectsPreferences;
 
     public Application(Preferences preferences) {
+        this.preferences = preferences;
         this.projectsPreferences = preferences.node("projects");
+    }
+
+    public WindowSettings findWindowSettings(String name) {
+        return new WindowSettings(preferences.node(name));
     }
 
     public GitConfig findGitConfig() {
@@ -76,7 +83,7 @@ public class Application {
             return false;
         }
 
-        return repositoryUrlString.endsWith(".git");
+        return true;
     }
 
     public Project cloneProject(String repositoryUrlString, File projectPath,

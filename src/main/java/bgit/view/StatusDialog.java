@@ -31,6 +31,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
 
+import bgit.model.Application;
 import bgit.model.GitBranchTrackingStatus;
 import bgit.model.GitCommit;
 import bgit.model.Project;
@@ -54,12 +55,14 @@ public class StatusDialog extends AbstractDialog {
 
     private JTextField statusTextField;
 
-    public StatusDialog(Project project) {
-        setTitle("Status");
+    public StatusDialog(Application application, Project project) {
+        super(application);
         this.project = project;
 
+        setTitle("Status");
         setSize(new Dimension(800, 400));
-        setLocationRelativeTo(null);
+        bindWindowSettings();
+
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowOpened(WindowEvent e) {
@@ -276,8 +279,8 @@ public class StatusDialog extends AbstractDialog {
 
         GitCommit newestGitCommit = project
                 .findNewestGitCommit(relativePathString);
-        DiffDialog diffDialog = new DiffDialog(project, relativePathString,
-                newestGitCommit, null);
+        DiffDialog diffDialog = new DiffDialog(application, project,
+                relativePathString, newestGitCommit, null);
         diffDialog.setVisible(true);
     }
 

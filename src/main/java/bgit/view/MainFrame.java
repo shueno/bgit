@@ -2,6 +2,7 @@ package bgit.view;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -22,12 +23,14 @@ import javax.swing.event.ChangeListener;
 import bgit.model.Application;
 import bgit.model.GitConfig;
 import bgit.model.Project;
+import bgit.model.WindowSettings;
 
-// TODO Save and restore window size.
 @SuppressWarnings("serial")
 public class MainFrame extends JFrame {
 
     private final Application application;
+
+    private final WindowSettings windowSettings;
 
     private final JMenuBar menuBar;
 
@@ -41,7 +44,7 @@ public class MainFrame extends JFrame {
 
     private final Action renameProjectAction = new RenameProjectAction();
 
-    private final Action deleteProjectAction = new DeleteProjectAction();
+    private final Action closeProjectAction = new CloseProjectAction();
 
     private final Action configApplicationAction = new ConfigApplicationAction();
 
@@ -51,18 +54,41 @@ public class MainFrame extends JFrame {
 
     public MainFrame(Application application) {
         this.application = application;
+        this.windowSettings = application.findWindowSettings(getClass()
+                .getName());
+
+        setMinimumSize(new Dimension(100, 100));
+        Dimension size = windowSettings.getSize();
+
+        if (size == null) {
+            setSize(1000, 500);
+
+        } else {
+            setSize(size);
+        }
+
+        Point location = windowSettings.getLocation();
+
+        if (location == null) {
+            setLocationRelativeTo(null);
+
+        } else {
+            setLocation(location);
+        }
 
         setTitle("BGit");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(new Dimension(1000, 500));
-        setLocationRelativeTo(null);
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowOpened(WindowEvent e) {
                 handleWindowOpened();
             }
-        });
 
+            @Override
+            public void windowClosing(WindowEvent e) {
+                handleWindowClosing();
+            }
+        });
         menuBar = new JMenuBar();
         setJMenuBar(menuBar);
 
@@ -75,7 +101,7 @@ public class MainFrame extends JFrame {
         projectMenu.add(newProjectAction);
         projectMenu.add(cloneProjectAction);
         projectMenu.add(renameProjectAction).setVisible(false);
-        projectMenu.add(deleteProjectAction).setVisible(false);
+        projectMenu.add(closeProjectAction).setVisible(false);
 
         JMenu applicationMenuItem = new JMenu("Application");
         menuBar.add(applicationMenuItem);
@@ -110,7 +136,7 @@ public class MainFrame extends JFrame {
         }
 
         for (Project project : application.findProjects()) {
-            ProjectPanel projectPanel = new ProjectPanel(project);
+            ProjectPanel projectPanel = new ProjectPanel(application, project);
             insertProjectPanel(projectPanel);
         }
     }
@@ -176,6 +202,16 @@ public class MainFrame extends JFrame {
         dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
     }
 
+    private void handleWindowClosing() {
+
+        if (getExtendedState() == NORMAL) {
+            windowSettings.setSize(getSize());
+            windowSettings.setLocation(getLocationOnScreen());
+        }
+
+        windowSettings.flush();
+    }
+
     private class ExitAction extends AbstractAction {
 
         public ExitAction() {
@@ -188,7 +224,6 @@ public class MainFrame extends JFrame {
         }
     }
 
-    // TODO Review to distinguish NewProject and OpenProject
     private class NewProjectAction extends AbstractAction {
 
         public NewProjectAction() {
@@ -205,7 +240,7 @@ public class MainFrame extends JFrame {
                 return;
             }
 
-            ProjectPanel projectPanel = new ProjectPanel(project);
+            ProjectPanel projectPanel = new ProjectPanel(application, project);
             insertProjectPanel(projectPanel);
             tabbedPane.setSelectedComponent(projectPanel);
         }
@@ -227,7 +262,7 @@ public class MainFrame extends JFrame {
                 return;
             }
 
-            ProjectPanel projectPanel = new ProjectPanel(project);
+            ProjectPanel projectPanel = new ProjectPanel(application, project);
             insertProjectPanel(projectPanel);
             tabbedPane.setSelectedComponent(projectPanel);
         }
@@ -275,10 +310,10 @@ public class MainFrame extends JFrame {
         }
     }
 
-    private class DeleteProjectAction extends AbstractAction {
+    private class CloseProjectAction extends AbstractAction {
 
-        public DeleteProjectAction() {
-            putValue(NAME, "Delete");
+        public CloseProjectAction() {
+            putValue(NAME, "Close");
         }
 
         @Override
@@ -290,7 +325,7 @@ public class MainFrame extends JFrame {
                 return;
             }
 
-            int option = JOptionPane.showConfirmDialog(null, "Delete?",
+            int option = JOptionPane.showConfirmDialog(null, "Close?",
                     "Confirmation", JOptionPane.YES_NO_OPTION);
 
             if (option != JOptionPane.YES_OPTION) {
@@ -317,7 +352,7 @@ public class MainFrame extends JFrame {
                 return;
             }
 
-            ConfigDialog configDialog = new ConfigDialog(gitConfig);
+            ConfigDialog configDialog = new ConfigDialog(application, gitConfig);
             configDialog.setVisible(true);
         }
     }
@@ -338,7 +373,7 @@ public class MainFrame extends JFrame {
             }
 
             UserSettingsDialog userSettingsDialog = new UserSettingsDialog(
-                    gitConfig);
+                    application, gitConfig);
             userSettingsDialog.setVisible(true);
         }
     }

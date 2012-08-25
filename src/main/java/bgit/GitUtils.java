@@ -39,6 +39,7 @@ import org.eclipse.jgit.revwalk.RevObject;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.transport.PushResult;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
+import org.eclipse.jgit.treewalk.TreeWalk;
 import org.eclipse.jgit.treewalk.WorkingTreeIterator;
 
 public class GitUtils {
@@ -313,6 +314,26 @@ public class GitUtils {
 
         try {
             return objectLoader.openStream();
+
+        } catch (IOException e) {
+            throw new ApplicationException(e);
+        }
+    }
+
+    public static int addTree(TreeWalk treeWalk, AnyObjectId id) {
+
+        try {
+            return treeWalk.addTree(id);
+
+        } catch (IOException e) {
+            throw new ApplicationException(e);
+        }
+    }
+
+    public static boolean next(TreeWalk treeWalk) {
+
+        try {
+            return treeWalk.next();
 
         } catch (IOException e) {
             throw new ApplicationException(e);

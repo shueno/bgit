@@ -17,6 +17,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
+import bgit.model.Application;
 import bgit.model.GitTag;
 import bgit.model.Project;
 
@@ -31,12 +32,14 @@ public class TagEditorDialog extends AbstractDialog {
 
     private final JTextArea messageTextArea;
 
-    public TagEditorDialog(Project project) {
+    public TagEditorDialog(Application application, Project project) {
+        super(application);
         this.project = project;
 
         setTitle("Tag Editor");
         setSize(new Dimension(500, 200));
-        setLocationRelativeTo(null);
+        bindWindowSettings();
+
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowOpened(WindowEvent e) {

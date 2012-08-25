@@ -30,6 +30,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
 
+import bgit.model.Application;
 import bgit.model.GitConfig;
 
 @SuppressWarnings("serial")
@@ -45,12 +46,14 @@ public class ConfigDialog extends AbstractDialog {
 
     private final Action editAction = new EditAction();
 
-    public ConfigDialog(GitConfig gitConfig) {
+    public ConfigDialog(Application application, GitConfig gitConfig) {
+        super(application);
         this.gitConfig = gitConfig;
 
         setTitle("Config");
         setSize(new Dimension(600, 400));
-        setLocationRelativeTo(null);
+        bindWindowSettings();
+
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowOpened(WindowEvent e) {
@@ -201,8 +204,8 @@ public class ConfigDialog extends AbstractDialog {
     }
 
     private void handleNewActionPerformed() {
-        ConfigEntryDialog configEntryDialog = new ConfigEntryDialog(gitConfig,
-                null, null);
+        ConfigEntryDialog configEntryDialog = new ConfigEntryDialog(
+                application, gitConfig, null, null);
         configEntryDialog.setVisible(true);
         String newValue = configEntryDialog.getNewValue();
 
@@ -226,8 +229,8 @@ public class ConfigDialog extends AbstractDialog {
         String oldValue = (String) configTableModel
                 .getValueAt(modelRowIndex, 1);
 
-        ConfigEntryDialog configEntryDialog = new ConfigEntryDialog(gitConfig,
-                key, oldValue);
+        ConfigEntryDialog configEntryDialog = new ConfigEntryDialog(
+                application, gitConfig, key, oldValue);
         configEntryDialog.setVisible(true);
         String newValue = configEntryDialog.getNewValue();
 

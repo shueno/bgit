@@ -17,6 +17,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+import bgit.model.Application;
 import bgit.model.GitConfig;
 import bgit.model.Project;
 
@@ -31,12 +32,13 @@ public class ShareDialog extends AbstractDialog {
 
     private final JCheckBox connectCheckbox;
 
-    public ShareDialog(Project project) {
+    public ShareDialog(Application application, Project project) {
+        super(application);
         this.project = project;
 
         setTitle("Share");
         setSize(new Dimension(500, 140));
-        setLocationRelativeTo(null);
+        bindWindowSettings();
 
         JPanel footerPanel = new JPanel();
         getContentPane().add(footerPanel, BorderLayout.SOUTH);

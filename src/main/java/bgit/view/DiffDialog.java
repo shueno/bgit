@@ -20,6 +20,7 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
 import bgit.JdkUtils;
+import bgit.model.Application;
 import bgit.model.GitCommit;
 import bgit.model.GitDiffEntry;
 import bgit.model.GitDiffResult;
@@ -28,21 +29,39 @@ import bgit.model.Project;
 
 @SuppressWarnings("serial")
 public class DiffDialog extends AbstractDialog {
+
     private final Project project;
+
     private final String relativePathString;
+
     private final GitCommit oldGitCommit;
+
     private final GitCommit newGitCommit;
-    private final JTextField pathTextField;
-    private final JTextField newTextField;
-    private final JTextField oldTextField;
-    private final JTextArea diffTextArea;
-    private final JTextField oldFileTextField;
-    private final JTextField newFileTextField;
+
     private GitFile oldGitFile;
+
     private GitFile newGitFile;
 
-    public DiffDialog(Project project, String relativePathString,
-            GitCommit oldGitCommit, GitCommit newGitCommit) {
+    private final JTextField pathTextField;
+
+    private final JTextField oldCommitTextField;
+
+    private final JTextField oldFileTextField;
+
+    private final JButton openOldGitFileButton;
+
+    private final JTextField newCommitTextField;
+
+    private final JTextField newFileTextField;
+
+    private final JButton openNewGitFileButton;
+
+    private final JTextArea diffTextArea;
+
+    public DiffDialog(Application application, Project project,
+            String relativePathString, GitCommit oldGitCommit,
+            GitCommit newGitCommit) {
+        super(application);
         this.project = project;
         this.relativePathString = relativePathString;
         this.oldGitCommit = oldGitCommit;
@@ -50,7 +69,8 @@ public class DiffDialog extends AbstractDialog {
 
         setTitle("Diff");
         setSize(new Dimension(800, 500));
-        setLocationRelativeTo(null);
+        bindWindowSettings();
+
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowOpened(WindowEvent e) {
@@ -108,16 +128,16 @@ public class DiffDialog extends AbstractDialog {
         gbc_lblOld.gridy = 1;
         panel.add(lblOld, gbc_lblOld);
 
-        oldTextField = new JTextField();
-        oldTextField.setEditable(false);
-        GridBagConstraints gbc_oldTextField = new GridBagConstraints();
-        gbc_oldTextField.gridwidth = 2;
-        gbc_oldTextField.insets = new Insets(0, 0, 5, 0);
-        gbc_oldTextField.fill = GridBagConstraints.HORIZONTAL;
-        gbc_oldTextField.gridx = 1;
-        gbc_oldTextField.gridy = 1;
-        panel.add(oldTextField, gbc_oldTextField);
-        oldTextField.setColumns(10);
+        oldCommitTextField = new JTextField();
+        oldCommitTextField.setEditable(false);
+        GridBagConstraints gbc_oldCommitTextField = new GridBagConstraints();
+        gbc_oldCommitTextField.gridwidth = 2;
+        gbc_oldCommitTextField.insets = new Insets(0, 0, 5, 0);
+        gbc_oldCommitTextField.fill = GridBagConstraints.HORIZONTAL;
+        gbc_oldCommitTextField.gridx = 1;
+        gbc_oldCommitTextField.gridy = 1;
+        panel.add(oldCommitTextField, gbc_oldCommitTextField);
+        oldCommitTextField.setColumns(10);
 
         JLabel lblOldFile = new JLabel("Old file");
         GridBagConstraints gbc_lblOldFile = new GridBagConstraints();
@@ -137,7 +157,8 @@ public class DiffDialog extends AbstractDialog {
         panel.add(oldFileTextField, gbc_oldFileTextField);
         oldFileTextField.setColumns(10);
 
-        JButton openOldGitFileButton = new JButton("Open");
+        openOldGitFileButton = new JButton("Open");
+        openOldGitFileButton.setEnabled(false);
         openOldGitFileButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -158,16 +179,16 @@ public class DiffDialog extends AbstractDialog {
         gbc_lblNew.gridy = 3;
         panel.add(lblNew, gbc_lblNew);
 
-        newTextField = new JTextField();
-        newTextField.setEditable(false);
-        GridBagConstraints gbc_newTextField = new GridBagConstraints();
-        gbc_newTextField.gridwidth = 2;
-        gbc_newTextField.insets = new Insets(0, 0, 5, 0);
-        gbc_newTextField.fill = GridBagConstraints.HORIZONTAL;
-        gbc_newTextField.gridx = 1;
-        gbc_newTextField.gridy = 3;
-        panel.add(newTextField, gbc_newTextField);
-        newTextField.setColumns(10);
+        newCommitTextField = new JTextField();
+        newCommitTextField.setEditable(false);
+        GridBagConstraints gbc_newCommitTextField = new GridBagConstraints();
+        gbc_newCommitTextField.gridwidth = 2;
+        gbc_newCommitTextField.insets = new Insets(0, 0, 5, 0);
+        gbc_newCommitTextField.fill = GridBagConstraints.HORIZONTAL;
+        gbc_newCommitTextField.gridx = 1;
+        gbc_newCommitTextField.gridy = 3;
+        panel.add(newCommitTextField, gbc_newCommitTextField);
+        newCommitTextField.setColumns(10);
 
         JLabel lblNewFile = new JLabel("New file");
         GridBagConstraints gbc_lblNewFile = new GridBagConstraints();
@@ -187,7 +208,8 @@ public class DiffDialog extends AbstractDialog {
         panel.add(newFileTextField, gbc_newFileTextField);
         newFileTextField.setColumns(10);
 
-        JButton openNewGitFileButton = new JButton("Open");
+        openNewGitFileButton = new JButton("Open");
+        openNewGitFileButton.setEnabled(false);
         openNewGitFileButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -224,17 +246,17 @@ public class DiffDialog extends AbstractDialog {
         pathTextField.setText(relativePathString);
 
         if (oldGitCommit == null) {
-            oldTextField.setText("Empty");
+            oldCommitTextField.setText("Empty");
 
         } else {
-            oldTextField.setText(oldGitCommit.getOneline());
+            oldCommitTextField.setText(oldGitCommit.getOneline());
         }
 
         if (newGitCommit == null) {
-            newTextField.setText("Working tree");
+            newCommitTextField.setText("Working tree");
 
         } else {
-            newTextField.setText(newGitCommit.getOneline());
+            newCommitTextField.setText(newGitCommit.getOneline());
         }
 
         GitDiffResult gitDiffResult = project.diff(relativePathString,
@@ -249,21 +271,27 @@ public class DiffDialog extends AbstractDialog {
         GitDiffEntry gitDiffEntry = it.next();
         oldGitFile = gitDiffEntry.findOldGitFile();
         oldFileTextField.setText(oldGitFile.toString());
+
+        if (oldGitFile.isTracked()) {
+            openOldGitFileButton.setEnabled(true);
+        }
+
         newGitFile = gitDiffEntry.findNewGitFile();
         newFileTextField.setText(newGitFile.toString());
+
+        if (newGitFile.isTracked()) {
+            openNewGitFileButton.setEnabled(true);
+        }
+
         diffTextArea.setText(gitDiffResult.getText());
         diffTextArea.setCaretPosition(0);
     }
 
-    // TODO Check if old commit is empty
-    // TODO Check if the file is /dev/null
     private void handleOpenOldGitFileActionPerformed() {
         Desktop desktop = Desktop.getDesktop();
         JdkUtils.open(desktop, oldGitFile.createTemporaryFile());
     }
 
-    // TODO When the file is in working tree, cannot open by the objectId.
-    // TODO Check if the file is /dev/null
     private void handleOpenNewGitFileActionPerformed() {
         Desktop desktop = Desktop.getDesktop();
         JdkUtils.open(desktop, newGitFile.createTemporaryFile());

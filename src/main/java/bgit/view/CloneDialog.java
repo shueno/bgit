@@ -22,8 +22,6 @@ import bgit.model.Project;
 @SuppressWarnings("serial")
 public class CloneDialog extends AbstractDialog {
 
-    private final Application application;
-
     private Project project;
 
     private final JTextField repositoryUrlTextField;
@@ -33,11 +31,11 @@ public class CloneDialog extends AbstractDialog {
     private final JTextField projectPathTextField;
 
     public CloneDialog(Application application) {
-        this.application = application;
+        super(application);
 
         setTitle("Clone");
         setSize(new Dimension(500, 180));
-        setLocationRelativeTo(null);
+        bindWindowSettings();
 
         JPanel footerPanel = new JPanel();
         getContentPane().add(footerPanel, BorderLayout.SOUTH);

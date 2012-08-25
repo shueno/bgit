@@ -20,18 +20,17 @@ public class WorkFolder extends WorkNode {
     }
 
     @Override
-    public void delete() {
+    public boolean delete() {
         CommonsUtils.deleteDirectory(absolutePath);
+        return true;
     }
 
-    // TODO Check return value of mkdir.
-    public void createNewFolder(String name) {
-        new File(absolutePath, name).mkdir();
+    public boolean createNewFolder(String name) {
+        return new File(absolutePath, name).mkdir();
     }
 
-    // TODO Check return value of createNewFile.
-    public void createNewFile(String name) {
-        JdkUtils.createNewFile(new File(absolutePath, name));
+    public boolean createNewFile(String name) {
+        return JdkUtils.createNewFile(new File(absolutePath, name));
     }
 
     public boolean isRoot() {

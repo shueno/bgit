@@ -31,6 +31,7 @@ import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
 import bgit.JdkUtils;
+import bgit.model.Application;
 import bgit.model.GitCommit;
 import bgit.model.GitFile;
 import bgit.model.GitFolder;
@@ -54,12 +55,14 @@ public class RevisionTreeDialog extends AbstractDialog {
 
     private final JTable gitNodeTable;
 
-    public RevisionTreeDialog(GitCommit gitCommit) {
+    public RevisionTreeDialog(Application application, GitCommit gitCommit) {
+        super(application);
         this.gitCommit = gitCommit;
 
         setTitle("Revision tree");
         setSize(new Dimension(800, 400));
-        setLocationRelativeTo(null);
+        bindWindowSettings();
+
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowOpened(WindowEvent e) {
@@ -80,6 +83,15 @@ public class RevisionTreeDialog extends AbstractDialog {
                 fireWindowClosing();
             }
         });
+
+        JButton archiveButton = new JButton("Archive");
+        archiveButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                handleArchiveActionPerformed();
+            }
+        });
+        footerPanel.add(archiveButton);
         footerPanel.add(closeButton);
 
         JSplitPane splitPane = new JSplitPane();
@@ -214,6 +226,10 @@ public class RevisionTreeDialog extends AbstractDialog {
         }
 
         gitFolderTree.setSelectionPath(treePath);
+    }
+
+    private void handleArchiveActionPerformed() {
+        ViewHelper.commandArchive(gitCommit);
     }
 
     private class GitFolderTreeNode extends DefaultMutableTreeNode {

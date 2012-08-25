@@ -34,10 +34,13 @@ import org.eclipse.jgit.lib.BranchConfig;
 import org.eclipse.jgit.lib.BranchTrackingStatus;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.IndexDiff;
+import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevObject;
+import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.transport.PushResult;
 import org.eclipse.jgit.treewalk.AbstractTreeIterator;
 import org.eclipse.jgit.treewalk.EmptyTreeIterator;
@@ -80,6 +83,14 @@ public class Project implements Comparable<Project> {
         this.statusResult = new StatusResult(absolutePath, null);
     }
 
+    public GitRepositoryState findGitRepositoryState() {
+        return new GitRepositoryState(repository.getRepositoryState());
+    }
+
+    public boolean isConnected() {
+        return getRemoteTrackingBranchName() != null;
+    }
+
     public GitTag createTag(String tagName, String message) {
         TagCommand tagCommand = git.tag();
         tagCommand.setName(tagName);
@@ -112,12 +123,6 @@ public class Project implements Comparable<Project> {
         return new GitBranchTrackingStatus(branchTrackingStatus);
     }
 
-    public String getRemoteTrackingBranchName() {
-        BranchConfig branchConfig = new BranchConfig(repository.getConfig(),
-                getCurrentBranchName());
-        return branchConfig.getRemoteTrackingBranch();
-    }
-
     public String getCurrentBranchName() {
         return GitUtils.getBranch(repository);
     }
@@ -141,7 +146,7 @@ public class Project implements Comparable<Project> {
     }
 
     public GitConfig findGitConfig() {
-        StoredConfig config = git.getRepository().getConfig();
+        StoredConfig config = repository.getConfig();
         return new GitConfig(config);
     }
 
@@ -153,7 +158,6 @@ public class Project implements Comparable<Project> {
         GitUtils.call(cloneCommand);
     }
 
-    // TODO Cannot delete the first commit.
     public void discardLastCommit() {
         ResetCommand resetCommand = git.reset();
         resetCommand.setMode(ResetType.SOFT);
@@ -169,20 +173,18 @@ public class Project implements Comparable<Project> {
             oldTreeIterator = new EmptyTreeIterator();
 
         } else {
-            oldTreeIterator = GitUtils.newCanonicalTreeParser(null, git
-                    .getRepository().newObjectReader(), oldGitCommit
-                    .getTreeId());
+            oldTreeIterator = GitUtils.newCanonicalTreeParser(null,
+                    repository.newObjectReader(), oldGitCommit.getTreeId());
         }
 
         AbstractTreeIterator newTreeIterator = null;
 
         if (newGitCommit == null) {
-            newTreeIterator = new FileTreeIterator(git.getRepository());
+            newTreeIterator = new FileTreeIterator(repository);
 
         } else {
-            newTreeIterator = GitUtils.newCanonicalTreeParser(null, git
-                    .getRepository().newObjectReader(), newGitCommit
-                    .getTreeId());
+            newTreeIterator = GitUtils.newCanonicalTreeParser(null,
+                    repository.newObjectReader(), newGitCommit.getTreeId());
         }
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -202,9 +204,36 @@ public class Project implements Comparable<Project> {
         return new GitDiffResult(gitDiffEntries, outputStream.toString());
     }
 
+    public GitCommit findHeadGitCommit() {
+        Ref headRef = GitUtils.getRef(repository, Constants.HEAD);
+
+        if (headRef == null || !headRef.isSymbolic()) {
+            return null;
+        }
+
+        ObjectId objectId = headRef.getTarget().getObjectId();
+
+        if (objectId == null) {
+            return null;
+        }
+
+        RevObject revObject = GitUtils.parseAny(new RevWalk(repository),
+                objectId);
+
+        if (revObject.getType() != Constants.OBJ_COMMIT) {
+            return null;
+        }
+
+        return new GitCommit(this, (RevCommit) revObject);
+    }
+
     public GitCommit findNewestGitCommit(String relativePathString) {
         LogCommand logCommand = git.log();
-        logCommand.addPath(replaceSeparators(relativePathString));
+
+        if (relativePathString != null) {
+            logCommand.addPath(replaceSeparators(relativePathString));
+        }
+
         Iterable<RevCommit> revCommits = GitUtils.call(logCommand);
         Iterator<RevCommit> it = revCommits.iterator();
 
@@ -216,21 +245,19 @@ public class Project implements Comparable<Project> {
     }
 
     public Iterable<GitCommit> log() {
+        LogCommand logCommand = git.log();
         Ref currentBranchRef = GitUtils.getRef(repository,
                 getCurrentBranchName());
-        Ref remoteTrackingBranchRef = null;
+        GitUtils.add(logCommand, currentBranchRef.getObjectId());
         String remoteTrackingBranchName = getRemoteTrackingBranchName();
 
         if (remoteTrackingBranchName != null) {
-            remoteTrackingBranchRef = GitUtils.getRef(repository,
+            Ref remoteTrackingBranchRef = GitUtils.getRef(repository,
                     remoteTrackingBranchName);
-        }
 
-        LogCommand logCommand = git.log();
-        GitUtils.add(logCommand, currentBranchRef.getObjectId());
-
-        if (remoteTrackingBranchRef != null) {
-            GitUtils.add(logCommand, remoteTrackingBranchRef.getObjectId());
+            if (remoteTrackingBranchRef != null) {
+                GitUtils.add(logCommand, remoteTrackingBranchRef.getObjectId());
+            }
         }
 
         Iterable<RevCommit> revCommits = GitUtils.call(logCommand);
@@ -242,6 +269,12 @@ public class Project implements Comparable<Project> {
         }
 
         return gitCommits;
+    }
+
+    private String getRemoteTrackingBranchName() {
+        BranchConfig branchConfig = new BranchConfig(repository.getConfig(),
+                getCurrentBranchName());
+        return branchConfig.getRemoteTrackingBranch();
     }
 
     public void commit(String message, List<String> relativePathStrings) {
@@ -431,7 +464,6 @@ public class Project implements Comparable<Project> {
             }
         });
         fileMonitor.setRecursive(true);
-        // TODO Don't montior ".git" directory using removeFile.
         fileMonitor.addFile(CommonsUtils.resolveFile(CommonsUtils.getManager(),
                 absolutePath.toString()));
         fileMonitor.start();

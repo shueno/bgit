@@ -16,6 +16,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+import bgit.model.Application;
 import bgit.model.GitConfig;
 
 @SuppressWarnings("serial")
@@ -33,14 +34,17 @@ public class ConfigEntryDialog extends AbstractDialog {
 
     private final JTextField valueTextField;
 
-    public ConfigEntryDialog(GitConfig gitConfig, String key, String oldValue) {
+    public ConfigEntryDialog(Application application, GitConfig gitConfig,
+            String key, String oldValue) {
+        super(application);
         this.gitConfig = gitConfig;
         this.key = key;
         this.oldValue = oldValue;
 
         setTitle("Config Entry");
         setSize(new Dimension(500, 140));
-        setLocationRelativeTo(null);
+        bindWindowSettings();
+
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowOpened(WindowEvent e) {

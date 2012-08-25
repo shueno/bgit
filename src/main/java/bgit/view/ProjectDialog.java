@@ -22,8 +22,6 @@ import bgit.model.Project;
 @SuppressWarnings("serial")
 public class ProjectDialog extends AbstractDialog {
 
-    private final Application application;
-
     private Project project;
 
     private final JTextField projectPathTextField;
@@ -31,11 +29,11 @@ public class ProjectDialog extends AbstractDialog {
     private final JTextField nameTextField;
 
     public ProjectDialog(Application application) {
-        this.application = application;
+        super(application);
 
         setTitle("Project");
         setSize(new Dimension(500, 140));
-        setLocationRelativeTo(null);
+        bindWindowSettings();
 
         JPanel footerPanel = new JPanel();
         getContentPane().add(footerPanel, BorderLayout.SOUTH);
@@ -68,7 +66,7 @@ public class ProjectDialog extends AbstractDialog {
         gbl_projectPanel.rowWeights = new double[] { 0.0, 0.0, Double.MIN_VALUE };
         projectPanel.setLayout(gbl_projectPanel);
 
-        JLabel projectPathLabel = new JLabel("New project path");
+        JLabel projectPathLabel = new JLabel("Project path");
         GridBagConstraints gbc_projectPathLabel = new GridBagConstraints();
         gbc_projectPathLabel.anchor = GridBagConstraints.EAST;
         gbc_projectPathLabel.insets = new Insets(0, 0, 5, 5);
